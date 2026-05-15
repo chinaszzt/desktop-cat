@@ -49,21 +49,94 @@ const CAT_SVG = `
   <g id="head"></g>
 
   <g id="eye-l" style="transform-origin: 48px 62px;">
-    <ellipse cx="48" cy="62" rx="5.5" ry="7.5" fill="var(--eye)"/>
-    <ellipse cx="49.6" cy="60" rx="2" ry="2.4" fill="#FFFFFF"/>
-    <circle cx="48.5" cy="65" r="0.7" fill="#FFFFFF" opacity="0.7"/>
+    <g class="eye-style eye-normal">
+      <ellipse cx="48" cy="62" rx="5.5" ry="7.5" fill="var(--eye)"/>
+      <ellipse cx="49.6" cy="60" rx="2" ry="2.4" fill="#FFFFFF"/>
+      <circle cx="48.5" cy="65" r="0.7" fill="#FFFFFF" opacity="0.7"/>
+    </g>
+    <g class="eye-style eye-wide">
+      <ellipse cx="48" cy="62" rx="6.8" ry="9" fill="var(--eye)"/>
+      <ellipse cx="50" cy="59" rx="2.6" ry="3.2" fill="#FFFFFF"/>
+      <circle cx="48" cy="65.5" r="1.2" fill="#FFFFFF" opacity="0.8"/>
+    </g>
+    <g class="eye-style eye-hearts">
+      <path d="M 48 58.5 C 45.6 56, 42.5 56.5, 42.5 59.8 C 42.5 63.5, 48 68, 48 68 C 48 68, 53.5 63.5, 53.5 59.8 C 53.5 56.5, 50.4 56, 48 58.5 Z" fill="#E54F6B"/>
+      <ellipse cx="46" cy="60" rx="1.1" ry="1.3" fill="#FFFFFF" opacity="0.7"/>
+    </g>
+    <g class="eye-style eye-stars">
+      <path d="M 48 55 L 49.2 60.4 L 54.6 61.4 L 49.2 62.6 L 48 68.4 L 46.8 62.6 L 41.4 61.4 L 46.8 60.4 Z" fill="#FFD23B" stroke="#B47A30" stroke-width="0.4"/>
+      <circle cx="48" cy="62" r="0.7" fill="#FFFFFF"/>
+    </g>
+    <g class="eye-style eye-x">
+      <path d="M 44 58 L 52 66" stroke="var(--eye)" stroke-width="2" stroke-linecap="round"/>
+      <path d="M 52 58 L 44 66" stroke="var(--eye)" stroke-width="2" stroke-linecap="round"/>
+    </g>
+    <g class="eye-style eye-happy">
+      <path d="M 42.5 64 Q 48 57, 53.5 64" stroke="var(--eye)" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    </g>
+    <g class="eye-style eye-angry">
+      <ellipse cx="48" cy="63" rx="5.2" ry="6.8" fill="var(--eye)"/>
+      <ellipse cx="49.6" cy="61" rx="1.5" ry="1.8" fill="#FFFFFF"/>
+      <path d="M 41 56 L 53.5 60" stroke="var(--eye)" stroke-width="2" stroke-linecap="round"/>
+    </g>
   </g>
   <g id="eye-r" style="transform-origin: 72px 62px;">
-    <ellipse cx="72" cy="62" rx="5.5" ry="7.5" fill="var(--eye)"/>
-    <ellipse cx="73.6" cy="60" rx="2" ry="2.4" fill="#FFFFFF"/>
-    <circle cx="72.5" cy="65" r="0.7" fill="#FFFFFF" opacity="0.7"/>
+    <g class="eye-style eye-normal">
+      <ellipse cx="72" cy="62" rx="5.5" ry="7.5" fill="var(--eye)"/>
+      <ellipse cx="73.6" cy="60" rx="2" ry="2.4" fill="#FFFFFF"/>
+      <circle cx="72.5" cy="65" r="0.7" fill="#FFFFFF" opacity="0.7"/>
+    </g>
+    <g class="eye-style eye-wide">
+      <ellipse cx="72" cy="62" rx="6.8" ry="9" fill="var(--eye)"/>
+      <ellipse cx="74" cy="59" rx="2.6" ry="3.2" fill="#FFFFFF"/>
+      <circle cx="72" cy="65.5" r="1.2" fill="#FFFFFF" opacity="0.8"/>
+    </g>
+    <g class="eye-style eye-hearts">
+      <path d="M 72 58.5 C 69.6 56, 66.5 56.5, 66.5 59.8 C 66.5 63.5, 72 68, 72 68 C 72 68, 77.5 63.5, 77.5 59.8 C 77.5 56.5, 74.4 56, 72 58.5 Z" fill="#E54F6B"/>
+      <ellipse cx="70" cy="60" rx="1.1" ry="1.3" fill="#FFFFFF" opacity="0.7"/>
+    </g>
+    <g class="eye-style eye-stars">
+      <path d="M 72 55 L 73.2 60.4 L 78.6 61.4 L 73.2 62.6 L 72 68.4 L 70.8 62.6 L 65.4 61.4 L 70.8 60.4 Z" fill="#FFD23B" stroke="#B47A30" stroke-width="0.4"/>
+      <circle cx="72" cy="62" r="0.7" fill="#FFFFFF"/>
+    </g>
+    <g class="eye-style eye-x">
+      <path d="M 68 58 L 76 66" stroke="var(--eye)" stroke-width="2" stroke-linecap="round"/>
+      <path d="M 76 58 L 68 66" stroke="var(--eye)" stroke-width="2" stroke-linecap="round"/>
+    </g>
+    <g class="eye-style eye-happy">
+      <path d="M 66.5 64 Q 72 57, 77.5 64" stroke="var(--eye)" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    </g>
+    <g class="eye-style eye-angry">
+      <ellipse cx="72" cy="63" rx="5.2" ry="6.8" fill="var(--eye)"/>
+      <ellipse cx="73.6" cy="61" rx="1.5" ry="1.8" fill="#FFFFFF"/>
+      <path d="M 79 56 L 66.5 60" stroke="var(--eye)" stroke-width="2" stroke-linecap="round"/>
+    </g>
   </g>
 
   <path d="M 57 70 L 63 70 L 60 73 Z" fill="var(--nose)"/>
 
   <g id="mouth" style="transform-origin: 60px 75px;">
-    <path d="M 60 73 Q 56 78, 53 76" stroke="#3A2A20" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-    <path d="M 60 73 Q 64 78, 67 76" stroke="#3A2A20" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <g class="mouth-style mouth-normal">
+      <path d="M 60 73 Q 56 78, 53 76" stroke="#3A2A20" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+      <path d="M 60 73 Q 64 78, 67 76" stroke="#3A2A20" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    </g>
+    <g class="mouth-style mouth-smile">
+      <path d="M 53 73 Q 60 81, 67 73" stroke="#3A2A20" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    </g>
+    <g class="mouth-style mouth-grumpy">
+      <path d="M 53 75 L 56 78 L 58 75 L 60 78 L 62 75 L 64 78 L 67 75" stroke="#3A2A20" stroke-width="1.2" fill="none" stroke-linejoin="round"/>
+    </g>
+    <g class="mouth-style mouth-tongue">
+      <path d="M 60 73 Q 56 76, 54 76" stroke="#3A2A20" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+      <path d="M 60 73 Q 64 76, 66 76" stroke="#3A2A20" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+      <ellipse cx="60" cy="78" rx="2.8" ry="1.8" fill="#E76A8A"/>
+    </g>
+    <g class="mouth-style mouth-shy">
+      <path d="M 57 76 L 63 76" stroke="#3A2A20" stroke-width="1.3" stroke-linecap="round"/>
+    </g>
+    <g class="mouth-style mouth-pursed">
+      <ellipse cx="60" cy="76" rx="1.6" ry="0.9" fill="#3A2A20"/>
+    </g>
     <path id="mouth-open" d="M 56 75 Q 60 81, 64 75 Q 60 78, 56 75 Z" fill="#C2546F" opacity="0"/>
   </g>
 
@@ -127,6 +200,18 @@ const state = {
   circleCooldown: 0,
   // stare lock prevents eye-follow during stare
   stareLocked: false,
+  // swat_cursor (idle mouse near cat → cat takes a swat)
+  cursorStillT0: 0,
+  lastSwatCursorT: 0,
+  // startle (mouse rushes at cat)
+  lastStartleT: 0,
+  // smoothed display values (1st-order low-pass per frame) — kills mode-switch pops
+  disp: {
+    bodyTilt: 0, bodyScaleX: 1, bodyScaleY: 1, bodyBob: 0,
+    tailSwing: 0, legFLY: 0, legFRY: 0,
+    eyeScaleY: 1, eyeShiftX: 0, eyeShiftY: 0,
+    mouthScaleY: 1, mouthOpenOpacity: 0,
+  },
   modeUntil: 0,
   // gait: walk | run  (only meaningful in walking / interested)
   gait: "walk",
@@ -259,6 +344,62 @@ function showBubble(text, dur = 1500) {
 // smoothstep easing — slow start, slow end, fast middle
 function smoothstep(t) { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); }
 
+// 1st-order low-pass: smoothly approach target. halfLife in ms.
+function lerpDisp(name, target, dt, halfLife) {
+  const k = 1 - Math.pow(0.5, dt / (halfLife || 70));
+  state.disp[name] += (target - state.disp[name]) * k;
+}
+
+// Pick eyes + mouth variant from state. Called every frame.
+function selectFace(now) {
+  let eyes = "normal", mouth = "normal";
+
+  if (state.mode === "pet")          { eyes = "hearts"; mouth = "smile"; }
+  else if (state.mode === "dragged") { eyes = "wide";   mouth = "shy"; }
+  else if (state.mode === "dizzy")   { eyes = "x";      mouth = "normal"; }
+  else if (state.mode === "sleeping"){ eyes = "happy"; }
+  else if (state.mode === "watching"){ eyes = "wide"; }
+  else if (state.mode === "feeding" && state.feed && state.feed.eatT0) { eyes = "happy"; }
+  else if (state.mode === "clingy" && state.clingyShown) { eyes = "hearts"; mouth = "smile"; }
+  else if (state.mode === "scratching") { eyes = "wide"; }
+  else if (state.mode === "photo")    { eyes = "stars";  mouth = "smile"; }
+  else if (state.mode === "startled") { eyes = "wide"; }
+  else if (state.mode === "chasing")  { eyes = "wide"; }
+  else if (state.mode === "trick") {
+    switch (state.trickAction) {
+      case "heart":      eyes = "hearts"; mouth = "smile"; break;
+      case "spin":       eyes = "stars";  mouth = "smile"; break;
+      case "happy_jump": eyes = "stars";  mouth = "smile"; break;
+      case "pounce":     eyes = "wide"; break;
+      case "grumpy":     eyes = "angry";  mouth = "grumpy"; break;
+      case "wave":       eyes = "happy";  mouth = "smile"; break;
+      case "shy":        eyes = "happy";  mouth = "shy"; break;
+      case "swat_cursor":eyes = "wide"; break;
+    }
+  }
+  else if (state.mode === "idle") {
+    switch (state.idleAction) {
+      case "stare":         eyes = "wide"; break;
+      case "loaf":          eyes = "happy"; break;
+      case "rollover":      eyes = "happy"; break;
+      case "shake":         eyes = "happy"; break;
+      case "wiggle":        eyes = "wide"; break;
+      case "itch":          eyes = "happy"; break;
+      case "sniff_air":     mouth = "pursed"; break;
+      case "sniff_ground":  mouth = "pursed"; break;
+      case "sneeze":        eyes = "happy"; break;
+      case "fold_paws":     eyes = "happy"; break;
+      case "sideways":      eyes = "happy"; break;
+    }
+  }
+
+  // very sleepy → drooping happy eyes
+  if (state.sleepiness > 80 && state.mode !== "sleeping" && eyes === "normal") eyes = "happy";
+
+  if (catEl.getAttribute("data-eyes")  !== eyes)  catEl.setAttribute("data-eyes",  eyes);
+  if (catEl.getAttribute("data-mouth") !== mouth) catEl.setAttribute("data-mouth", mouth);
+}
+
 function startWalkLeg(now, isRun = false) {
   state.mode = "walking";
   state.gait = isRun ? "run" : "walk";
@@ -286,10 +427,11 @@ function startZoom(now) {
 function startChase(now) {
   const r = Math.random();
   let variant;
-  if      (r < 0.40) variant = "dash";
-  else if (r < 0.70) variant = "leap";
-  else if (r < 0.80) variant = "swat";
-  else               variant = "leap_swat";
+  if      (r < 0.32) variant = "dash";
+  else if (r < 0.58) variant = "leap";
+  else if (r < 0.70) variant = "swat";
+  else if (r < 0.86) variant = "leap_swat";
+  else               variant = "chase_tail";
 
   if (variant === "dash") { startZoom(now); return; }
 
@@ -297,6 +439,13 @@ function startChase(now) {
   state.chase = { variant, t0: now, leapsLeft: 0, leapT0: 0, pauseUntil: 0 };
   state.jump = null;
   triggerTailWag(now, 34, 9, 1600);
+
+  if (variant === "chase_tail") {
+    state.chase.spinT0 = now;
+    state.modeUntil = now + rand(2200, 3000);   // 2-3 spins
+    triggerTailWag(now, 38, 11, 2400);
+    return;
+  }
 
   if (variant === "swat") {
     // face a random side, swat at empty air
@@ -346,13 +495,16 @@ function startIdle(now, longer = false) {
   // pick weighted action; nap/groom heavier when user is afk
   const afk = state.cursorMoveAmt < 40;
   const pool = afk
-    ? ["stretch", "sit", "yawn", "yawn", "look", "tail_curl", "loaf", "stare", "shake"]
-    : ["sit", "yawn", "stretch", "look", "tail_curl", "shake", "rollover", "loaf", "stare", "wiggle"];
+    ? ["stretch", "sit", "yawn", "yawn", "look", "tail_curl", "loaf", "stare", "shake",
+       "fold_paws", "sideways", "sniff_air"]
+    : ["sit", "yawn", "stretch", "look", "tail_curl", "shake", "rollover", "loaf", "stare", "wiggle",
+       "itch", "sniff_air", "sniff_ground", "fold_paws", "sideways", "sneeze"];
   const choice = pick(pool);
   state.idleAction = choice;
   state.idleActionT0 = now;
   state.lookFlipped = false;
   state.stareLocked = false;
+  state.sneezeShown = false;
   const durs = {
     sit: rand(1500, 2800),
     yawn: 900,
@@ -363,7 +515,13 @@ function startIdle(now, longer = false) {
     rollover: 2400,
     loaf: rand(3500, 6500),
     stare: rand(4500, 7500),
-    wiggle: 850,                    // pre-pounce, will trigger swat on exit
+    wiggle: 850,
+    itch: rand(900, 1500),
+    sniff_air: rand(1800, 2800),
+    sniff_ground: rand(2200, 3500),
+    sneeze: 700,
+    fold_paws: rand(2200, 3800),
+    sideways: rand(3500, 5500),
   };
   let d = durs[choice] || 2000;
   if (longer) d *= 1.5;
@@ -493,9 +651,13 @@ function startTrick(now, action) {
   state.trickT0 = now;
   state.modeUntil = now + ({
     meow: 900, heart: 1300, spin: 700, pounce: 600, happy_jump: 900,
+    grumpy: 1200, wave: 1400, shy: 1600, swat_cursor: 700,
   })[action];
-  if (action === "meow")  { showBubble(pick(MEOWS), 1300); triggerBlink(); }
-  if (action === "heart") { showBubble(pick(HEARTS), 1500); triggerBlink(); }
+  if (action === "meow")   { showBubble(pick(MEOWS), 1300); triggerBlink(); }
+  if (action === "heart")  { showBubble(pick(HEARTS), 1500); triggerBlink(); }
+  if (action === "grumpy") { showBubble(pick(["嘶!", "哼!", "走开!", "別碰!"]), 1200); }
+  if (action === "wave")   { showBubble(pick(["嗨~", "哟~", "Hi!"]), 1300); }
+  if (action === "shy")    { showBubble(pick(["...", "唔...", "(///∇///)"]), 1400); }
   if (action === "pounce" || action === "happy_jump") scheduleJump(now);
 }
 
@@ -586,6 +748,49 @@ function tick(now) {
     if (Math.random() < 0.5) showBubble(pick(["喵?", "喵...", "嗯?", "..."]), 1100);
   }
 
+  // ---- swat_cursor: mouse parked near the cat for a few seconds ----
+  if (cursorAlive && state.cursorMoveAmt < 14 && (state.mode === "walking" || state.mode === "idle")) {
+    // approximate dist for trigger; we use the existing cdist later (computed below); recompute cheap here:
+    const cx = state.x + CAT_W / 2;
+    const cy = state.y + CAT_H / 2;
+    const cd = Math.hypot(state.cursor.x - cx, state.cursor.y - cy);
+    if (cd < 220) {
+      if (!state.cursorStillT0) state.cursorStillT0 = now;
+      if (now - state.cursorStillT0 > 4000 && now - state.lastSwatCursorT > 25000) {
+        state.lastSwatCursorT = now;
+        state.cursorStillT0 = 0;
+        state.facing = (state.cursor.x - cx) > 0 ? 1 : -1;
+        startTrick(now, "swat_cursor");
+      }
+    } else {
+      state.cursorStillT0 = 0;
+    }
+  } else {
+    state.cursorStillT0 = 0;
+  }
+
+  // ---- startle: cursor rushes at the cat fast and close ----
+  if ((state.mode === "walking" || state.mode === "idle")
+      && now - state.lastStartleT > 18000
+      && state.cursorTrail.length >= 3) {
+    const last = state.cursorTrail[state.cursorTrail.length - 1];
+    const prev = state.cursorTrail[state.cursorTrail.length - 3];
+    const cx2 = state.x + CAT_W / 2, cy2 = state.y + CAT_H / 2;
+    const dPrev = Math.hypot(prev.x - cx2, prev.y - cy2);
+    const dNow  = Math.hypot(last.x - cx2, last.y - cy2);
+    const dtMs  = Math.max(1, last.t - prev.t);
+    const speed = Math.hypot(last.x - prev.x, last.y - prev.y) / dtMs;
+    if (speed > 1.4 && dNow < 160 && dPrev > dNow + 50) {
+      state.lastStartleT = now;
+      state.mode = "startled";
+      state.modeStartT = now;
+      state.modeUntil = now + 1100;
+      state.facing = (last.x - cx2) > 0 ? 1 : -1;
+      // hop back away from cursor
+      state.x = clamp(state.x - state.facing * 28, bounds().minX, bounds().maxX);
+    }
+  }
+
   // ---- circle detection: triggers a spin trick ----
   if (state.mode === "walking" || state.mode === "idle" || state.mode === "interested") {
     if (detectCircle(now)) {
@@ -644,7 +849,7 @@ function tick(now) {
   // sleeping is sacred: only a click wakes the cat
   const lockedModes = new Set([
     "trick", "sleeping", "pet", "dragged", "dizzy",
-    "feeding", "playing", "clingy", "scratching", "photo"
+    "feeding", "playing", "clingy", "scratching", "photo", "startled"
   ]);
   if (!lockedModes.has(state.mode)) {
     if (cursorAlive && cursorActive && cdist < 280 && state.mode !== "interested") {
@@ -867,6 +1072,10 @@ function tick(now) {
       flashEl.classList.add("hidden");
       pickNewTarget(); startWalkLeg(now, false);
     }
+  } else if (state.mode === "startled") {
+    if (now > state.modeUntil) {
+      pickNewTarget(); startWalkLeg(now, false);
+    }
   } else if (state.mode === "interested") {
     // not a straight chase — orbit/drift toward cursor area
     const desiredDist = 110;  // hover roughly 110px from cursor
@@ -897,6 +1106,12 @@ function tick(now) {
     } else if (c.variant === "swat") {
       // pure swat: no movement, render handles the strike
       if (now - c.swatT0 > c.dur) {
+        state.chase = null;
+        startIdle(now);
+      }
+    } else if (c.variant === "chase_tail") {
+      // spinning in place — render syncs bodyTilt directly
+      if (now > state.modeUntil) {
         state.chase = null;
         startIdle(now);
       }
@@ -1134,6 +1349,65 @@ function tick(now) {
         eyeScaleY = 1.1;
         break;
       }
+      case "itch": {
+        // high-freq paw thump
+        const phase = (now / 75) % (Math.PI * 2);
+        legFLY = -Math.max(0, Math.sin(phase)) * 6;
+        bodyTilt = -3 * state.facing;
+        bodyBob = Math.sin(now / 150) * 1.4;
+        tailSwing = Math.sin(now / 130) * 10;
+        break;
+      }
+      case "sniff_air": {
+        // head tilted up, body sways slightly
+        bodyTilt = -8 * state.facing;
+        bodyBob = Math.sin(now / 280) * 0.8;
+        tailSwing = Math.sin(now / 700) * 6;
+        break;
+      }
+      case "sniff_ground": {
+        // head down, body crouched
+        bodyTilt = 7 * state.facing;
+        bodyScaleY = 0.96;
+        bodyBob = Math.sin(now / 320) * 0.6;
+        tailSwing = Math.sin(now / 900) * 5;
+        break;
+      }
+      case "sneeze": {
+        const t = (now - state.idleActionT0) / 700;
+        if (t < 0.3) {
+          bodyTilt = 5 * state.facing;
+          eyeScaleY = 0.55;
+        } else if (t < 0.5) {
+          bodyTilt = -12 * state.facing;
+          bodyScaleX = 1.06;
+          bodyScaleY = 1.04;
+          eyeScaleY = 0.08;
+          if (!state.sneezeShown) {
+            state.sneezeShown = true;
+            showBubble(pick(["啊嚏!", "atishoo!", "啾!"]), 900);
+          }
+        } else {
+          bodyTilt = -4 * state.facing;
+        }
+        break;
+      }
+      case "fold_paws": {
+        bodyScaleY = 0.94;
+        bodyBob = 0;
+        legFLY = -1; legFRY = -1;
+        tailSwing = -22;
+        break;
+      }
+      case "sideways": {
+        // settle onto side
+        const t = clamp((now - state.idleActionT0) / 1200, 0, 1);
+        bodyTilt = smoothstep(t) * 68 * state.facing;
+        bodyBob = Math.sin(now / 1100) * 1.0;
+        legFLY = -3; legFRY = -5;
+        tailSwing = -16;
+        break;
+      }
     }
   }
 
@@ -1213,6 +1487,14 @@ function tick(now) {
       legFRY = -Math.max(0, Math.sin(phase + Math.PI)) * 3;
     }
     eyeScaleY = 1.05;
+  } else if (state.mode === "startled") {
+    const t = (now - state.modeStartT) / 1100;
+    bodyScaleY = 0.86;
+    bodyScaleX = 1.14;
+    tailSwing = -55;
+    bodyBob = Math.sin(now / 75) * 2 * Math.max(0, 1 - t);
+    eyeScaleY = 1.15;
+    legFLY = -2; legFRY = -2;
   } else if (state.mode === "photo") {
     const t = (now - state.modeStartT) / 1500;
     bodyBob = 0; bodyTilt = 0;
@@ -1248,6 +1530,43 @@ function tick(now) {
         bodyScaleX = 1 - Math.sin(t * Math.PI) * 0.05;
         bodyScaleY = 1 + Math.sin(t * Math.PI) * 0.08;
         break;
+      case "grumpy":
+        // puffed up + tail bristled + rapid micro-shake
+        bodyScaleY = 1 + Math.sin(t * Math.PI) * 0.10;
+        bodyScaleX = 1 + Math.sin(t * Math.PI) * 0.07;
+        bodyTilt   = Math.sin(now / 60) * 2;
+        tailSwing  = -55 + Math.sin(now / 80) * 10;
+        legFLY     = Math.sin(now / 60) * 1.5;
+        legFRY     = -Math.sin(now / 60) * 1.5;
+        break;
+      case "wave": {
+        // raise the forward paw and shake it
+        const liftK = Math.sin(Math.min(1, t * 1.5) * Math.PI / 2);
+        const wagY  = Math.sin(t * Math.PI * 4) * 2;
+        const lift  = -14 * liftK + wagY;
+        if (state.facing > 0) legFRY = lift;
+        else                  legFLY = lift;
+        bodyBob = Math.sin(t * Math.PI * 2) * 0.8;
+        break;
+      }
+      case "shy":
+        bodyScaleY = 0.94;
+        bodyTilt = -4 * state.facing;
+        legFLY = 1; legFRY = 1;
+        tailSwing = -28;
+        bodyBob = Math.sin(now / 350) * 0.6;
+        break;
+      case "swat_cursor": {
+        // see "chasing swat" — paw shoots toward cursor
+        const tt = t;
+        if (tt < 0.25) { bodyScaleY = 0.93; }
+        else if (tt < 0.6) {
+          const k = Math.sin((tt - 0.25) / 0.35 * Math.PI);
+          bodyTilt += -12 * state.facing * k;
+          mouthOpenOpacity = 1; mouthScaleY = 1.4;
+        }
+        break;
+      }
     }
   }
 
@@ -1313,8 +1632,10 @@ function tick(now) {
     }
   }
 
-  // tail wag overlay — additive on top of base tail motion
-  if (state.tailWag) {
+  // tail wag overlay — additive on top of base tail motion (skip for poses that have their own tail look)
+  const skipWag = (state.mode === "trick" && state.trickAction === "grumpy")
+               || (state.mode === "startled");
+  if (state.tailWag && !skipWag) {
     const w = state.tailWag;
     const localT = (now - w.t0) / 1000;
     const lifeT = (now - w.t0) / w.dur;
@@ -1349,33 +1670,66 @@ function tick(now) {
     eyeShiftY += fy;
   }
 
-  // ----- apply transforms -----
-  const finalScaleX = state.facingActual * bodyScaleX;
-  bodyEl.style.transform = `translateY(${bodyBob}px) rotate(${bodyTilt}deg) scale(${finalScaleX}, ${bodyScaleY})`;
-  tail.style.transform = `rotate(${tailSwing}deg)`;
+  // blink overrides eyeScaleY (apply before lerp so the blink is sharp)
+  if (now < blinkUntil) eyeScaleY = Math.min(eyeScaleY, 0.08);
+  // global yawn flag (auto from periodic)
+  if (now < yawnUntil) { mouthOpenOpacity = 1; mouthScaleY = Math.max(mouthScaleY, 1.6); }
+
+  // ----- select face (eyes + mouth variant) -----
+  selectFace(now);
+
+  // chase_tail: spinning in place — apply rotation directly (sync, not lerped)
+  if (state.mode === "chasing" && state.chase && state.chase.variant === "chase_tail") {
+    const spinT = (now - state.chase.spinT0) / Math.max(1, state.modeUntil - state.chase.spinT0);
+    bodyTilt = spinT * 720 * state.facing;
+    bodyBob = Math.sin(now / 90) * 1.5;
+    tailSwing = Math.sin(now / 70) * 30;
+    legFLY = Math.sin(now / 100) * 2;
+    legFRY = -Math.sin(now / 100) * 2;
+  }
+
+  // ----- low-pass smoothing — kills mode-switch pops -----
+  // spin / chase_tail need raw bodyTilt or rotation lags
+  const isSpinning =
+    (state.mode === "trick" && state.trickAction === "spin")
+    || (state.mode === "chasing" && state.chase && state.chase.variant === "chase_tail");
+  if (isSpinning) state.disp.bodyTilt = bodyTilt;
+  else            lerpDisp("bodyTilt", bodyTilt, dt, 70);
+  lerpDisp("bodyScaleX", bodyScaleX, dt, 70);
+  lerpDisp("bodyScaleY", bodyScaleY, dt, 70);
+  lerpDisp("bodyBob",    bodyBob,    dt, 50);
+  lerpDisp("tailSwing",  tailSwing,  dt, 55);
+  lerpDisp("legFLY",     legFLY,     dt, 55);
+  lerpDisp("legFRY",     legFRY,     dt, 55);
+  lerpDisp("eyeScaleY",  eyeScaleY,  dt, now < blinkUntil ? 25 : 60);  // crisper for blinks
+  lerpDisp("eyeShiftX",  eyeShiftX,  dt, 80);
+  lerpDisp("eyeShiftY",  eyeShiftY,  dt, 80);
+  lerpDisp("mouthScaleY",      mouthScaleY,      dt, 70);
+  lerpDisp("mouthOpenOpacity", mouthOpenOpacity, dt, 60);
+  const D = state.disp;
+
+  // ----- apply transforms (using smoothed values) -----
+  const finalScaleX = state.facingActual * D.bodyScaleX;
+  bodyEl.style.transform = `translateY(${D.bodyBob}px) rotate(${D.bodyTilt}deg) scale(${finalScaleX}, ${D.bodyScaleY})`;
+  tail.style.transform = `rotate(${D.tailSwing}deg)`;
   if (swatPawWhich === "fl") {
-    legFL.style.transform = `translate(${swatPawShiftX}px, ${legFLY + swatPawShiftY}px)`;
-    legFR.style.transform = `translateY(${legFRY}px)`;
+    legFL.style.transform = `translate(${swatPawShiftX}px, ${D.legFLY + swatPawShiftY}px)`;
+    legFR.style.transform = `translateY(${D.legFRY}px)`;
   } else if (swatPawWhich === "fr") {
-    legFL.style.transform = `translateY(${legFLY}px)`;
-    legFR.style.transform = `translate(${swatPawShiftX}px, ${legFRY + swatPawShiftY}px)`;
+    legFL.style.transform = `translateY(${D.legFLY}px)`;
+    legFR.style.transform = `translate(${swatPawShiftX}px, ${D.legFRY + swatPawShiftY}px)`;
   } else {
-    legFL.style.transform = `translateY(${legFLY}px)`;
-    legFR.style.transform = `translateY(${legFRY}px)`;
+    legFL.style.transform = `translateY(${D.legFLY}px)`;
+    legFR.style.transform = `translateY(${D.legFRY}px)`;
   }
   legBL.style.transform = "";
   legBR.style.transform = "";
   head.style.transform = "";
 
-  // blink overrides eyeScaleY
-  if (now < blinkUntil) eyeScaleY = Math.min(eyeScaleY, 0.08);
-  eyeL.style.transform = `translate(${eyeShiftX}px, ${eyeShiftY}px) scaleY(${eyeScaleY})`;
-  eyeR.style.transform = `translate(${eyeShiftX}px, ${eyeShiftY}px) scaleY(${eyeScaleY})`;
-
-  // global yawn flag (auto from periodic, separate from idle yawn)
-  if (now < yawnUntil) { mouthOpenOpacity = 1; mouthScaleY = Math.max(mouthScaleY, 1.6); }
-  mouthOpen.style.opacity = String(mouthOpenOpacity);
-  mouth.style.transform = `scaleY(${mouthScaleY})`;
+  eyeL.style.transform = `translate(${D.eyeShiftX}px, ${D.eyeShiftY}px) scaleY(${D.eyeScaleY})`;
+  eyeR.style.transform = `translate(${D.eyeShiftX}px, ${D.eyeShiftY}px) scaleY(${D.eyeScaleY})`;
+  mouthOpen.style.opacity = String(D.mouthOpenOpacity);
+  mouth.style.transform = `scaleY(${D.mouthScaleY})`;
 
   // ----- passthrough hit-test -----
   const ctxOpen = !ctxMenuEl.classList.contains("hidden");
@@ -1453,11 +1807,14 @@ window.addEventListener("DOMContentLoaded", () => {
       // short click → trick
       const r = Math.random();
       let action;
-      if      (r < 0.40) action = "meow";
-      else if (r < 0.65) action = "heart";
-      else if (r < 0.80) action = "spin";
-      else if (r < 0.92) action = "pounce";
-      else               action = "happy_jump";
+      if      (r < 0.26) action = "meow";
+      else if (r < 0.44) action = "heart";
+      else if (r < 0.56) action = "spin";
+      else if (r < 0.65) action = "pounce";
+      else if (r < 0.73) action = "happy_jump";
+      else if (r < 0.83) action = "grumpy";
+      else if (r < 0.92) action = "wave";
+      else               action = "shy";
       startTrick(now, action);
     }
   });

@@ -98,6 +98,24 @@ html, body {
   --blush: #FFB3BA;
 }
 
+/* Eye / mouth variants — switched by data-eyes / data-mouth */
+.eye-style, .mouth-style { display: none; }
+#cat[data-eyes="normal"]  .eye-normal,
+#cat[data-eyes="wide"]    .eye-wide,
+#cat[data-eyes="hearts"]  .eye-hearts,
+#cat[data-eyes="stars"]   .eye-stars,
+#cat[data-eyes="x"]       .eye-x,
+#cat[data-eyes="happy"]   .eye-happy,
+#cat[data-eyes="angry"]   .eye-angry,
+#cat[data-mouth="normal"] .mouth-normal,
+#cat[data-mouth="smile"]  .mouth-smile,
+#cat[data-mouth="grumpy"] .mouth-grumpy,
+#cat[data-mouth="tongue"] .mouth-tongue,
+#cat[data-mouth="shy"]    .mouth-shy,
+#cat[data-mouth="pursed"] .mouth-pursed { display: inline; }
+/* mouth-open overlay only meaningful when mouth is in normal state */
+#cat:not([data-mouth="normal"]) #mouth-open { display: none; }
+
 /* Hide pattern overlays except the active one */
 .pattern { display: none; }
 #cat[data-color="orange"] .pattern-stripes,
