@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <title>选一只猫</title>
+    <style>
+      :root {
+        font-family: "PingFang SC", "Hiragino Sans GB", -apple-system, sans-serif;
+      }
+      body {
+        margin: 0;
+        padding: 40px 24px 80px;
+        background: linear-gradient(180deg, #FFF8EE 0%, #FFEBD2 100%);
+        min-height: 100vh;
+        color: #3A2A20;
+      }
+      h1 {
+        text-align: center;
+        font-size: 28px;
+        margin: 0 0 8px;
+        letter-spacing: 1px;
+      }
+      .sub {
+        text-align: center;
+        opacity: 0.6;
+        margin-bottom: 36px;
+        font-size: 14px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 28px;
+        max-width: 1300px;
+        margin: 0 auto;
+      }
+      .card {
+        background: white;
+        border-radius: 24px;
+        padding: 28px 20px 22px;
+        box-shadow: 0 8px 24px rgba(220, 140, 60, 0.12);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        transition: transform 0.2s;
+      }
+      .card:hover { transform: translateY(-4px); }
+      .stage {
+        width: 220px;
+        height: 200px;
+        background: radial-gradient(circle at 50% 95%, rgba(0,0,0,0.06), transparent 60%);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+      }
+      .stage svg { width: 100%; height: 100%; overflow: visible; }
+      .name {
+        font-size: 20px;
+        font-weight: 700;
+        margin: 10px 0 4px;
+      }
+      .desc {
+        font-size: 13px;
+        opacity: 0.65;
+        line-height: 1.5;
+        margin: 0;
+      }
+      .id {
+        margin-top: 14px;
+        background: #FFE0B8;
+        color: #B95B1C;
+        font-size: 12px;
+        padding: 4px 12px;
+        border-radius: 99px;
+        font-weight: 600;
+      }
+      /* shared cat palette (orange tabby for comparison) */
+      .cat-svg {
+        --body: #F4A56B;
+        --body-dark: #C66A2C;
+        --belly: #FFF1DC;
+        --inner-ear: #FFB8C1;
+        --nose: #E36B7A;
+        --eye: #2D1A0A;
+        --whisker: #5A3A24;
+        --blush: #FFB3BA;
+      }
+      @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-3px); }
+      }
+      .stage svg { animation: float 2.6s ease-in-out infinite; }
+    </style>
+  </head>
+  <body>
+    <h1>🐾 选一只小猫</h1>
+    <p class="sub">每只都是手绘 SVG，4 种轮廓 / 表情风格 — 看完告诉我喜欢哪只</p>
+    <div class="grid">
+
+      <!-- ============ A. 当前款 ============ -->
+      <div class="card">
+        <div class="stage" id="cat-a"></div>
+        <div class="name">A · 标准款</div>
+        <p class="desc">当前桌面在跑的这只，大头圆耳、神情灵动</p>
+        <div class="id">cat-a</div>
+      </div>
+
+      <!-- ============ B. 大水汪眼·爱心款 ============ -->
+      <div class="card">
+        <div class="stage" id="cat-b"></div>
+        <div class="name">B · 水汪眼款</div>
+        <p class="desc">眼睛特大带星光，嘴成微笑弧，腮红明显，最"萌系"</p>
+        <div class="id">cat-b</div>
+      </div>
+
+      <!-- ============ C. 团子圆滚款 ============ -->
+      <div class="card">
+        <div class="stage" id="cat-c"></div>
+        <div class="name">C · 团子款</div>
+        <p class="desc">身体圆滚滚短腿，脸蛋占比超大，像汤团</p>
+        <div class="id">cat-c</div>
+      </div>
+
+      <!-- ============ D. 蹲坐款 ============ -->
+      <div class="card">
+        <div class="stage" id="cat-d"></div>
+        <div class="name">D · 抱手蹲坐款</div>
+        <p class="desc">默认姿态是萌蹲，前腿并拢，尾巴绕到身前；走路时再起身</p>
+        <div class="id">cat-d</div>
+      </div>
+
+    </div>
+
+    <script>
+      // ============ A: 标准款（当前线上版） ============
+      const SVG_A = `
+        <svg viewBox="0 0 120 110" class="cat-svg">
+          <ellipse cx="60" cy="103" rx="34" ry="3.2" fill="rgba(0,0,0,0.20)"/>
+          <path d="M 32 70 Q 12 64, 9 40 Q 8 26, 22 22 Q 13 28, 14 33" stroke="var(--body)" stroke-width="11" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="44" y="82" width="9" height="16" rx="4" fill="var(--body-dark)"/>
+          <ellipse cx="48.5" cy="99" rx="6" ry="3" fill="var(--body-dark)"/>
+          <rect x="74" y="82" width="9" height="16" rx="4" fill="var(--body-dark)"/>
+          <ellipse cx="78.5" cy="99" rx="6" ry="3" fill="var(--body-dark)"/>
+          <ellipse cx="60" cy="76" rx="32" ry="22" fill="var(--body)"/>
+          <path d="M 38 64 Q 42 60, 46 64" stroke="var(--body-dark)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+          <path d="M 48 60 Q 52 56, 56 60" stroke="var(--body-dark)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+          <path d="M 60 60 Q 64 56, 68 60" stroke="var(--body-dark)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+          <path d="M 72 64 Q 76 60, 80 64" stroke="var(--body-dark)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+          <ellipse cx="64" cy="84" rx="20" ry="10" fill="var(--belly)" opacity="0.55"/>
+          <rect x="48" y="84" width="9" height="16" rx="4" fill="var(--body)"/>
+          <ellipse cx="52.5" cy="101" rx="6" ry="3" fill="var(--body)"/>
+          <rect x="78" y="84" width="9" height="16" rx="4" fill="var(--body)"/>
+          <ellipse cx="82.5" cy="101" rx="6" ry="3" fill="var(--body)"/>
+          <path d="M 73 36 L 75 16 L 89 32 Z" fill="var(--body)"/>
+          <path d="M 77 32 L 78 22 L 86 31 Z" fill="var(--inner-ear)"/>
+          <path d="M 94 30 L 103 14 L 107 33 Z" fill="var(--body)"/>
+          <path d="M 97 28 L 102 20 L 105 31 Z" fill="var(--inner-ear)"/>
+          <circle cx="91" cy="52" r="23" fill="var(--body)"/>
+          <path d="M 78 36 Q 82 34, 86 36" stroke="var(--body-dark)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.75"/>
+          <path d="M 96 36 Q 101 34, 105 37" stroke="var(--body-dark)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.75"/>
+          <path d="M 91 30 L 91 39" stroke="var(--body-dark)" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.75"/>
+          <ellipse cx="91" cy="62" rx="12" ry="8" fill="var(--belly)" opacity="0.65"/>
+          <ellipse cx="83" cy="52" rx="4.2" ry="6" fill="var(--eye)"/>
+          <ellipse cx="84.3" cy="50" rx="1.4" ry="1.6" fill="#FFFFFF"/>
+          <ellipse cx="99" cy="52" rx="4.2" ry="6" fill="var(--eye)"/>
+          <ellipse cx="100.3" cy="50" rx="1.4" ry="1.6" fill="#FFFFFF"/>
+          <path d="M 88 58 L 94 58 L 91 62 Z" fill="var(--nose)"/>
+          <path d="M 91 62 Q 88 66, 85 64" stroke="#3A2A20" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+          <path d="M 91 62 Q 94 66, 97 64" stroke="#3A2A20" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+          <path d="M 76 60 L 64 58" stroke="var(--whisker)" stroke-width="0.9" stroke-linecap="round" opacity="0.85"/>
+          <path d="M 76 62 L 64 64" stroke="var(--whisker)" stroke-width="0.9" stroke-linecap="round" opacity="0.85"/>
+          <path d="M 106 60 L 118 58" stroke="var(--whisker)" stroke-width="0.9" stroke-linecap="round" opacity="0.85"/>
+          <path d="M 106 62 L 118 64" stroke="var(--whisker)" stroke-width="0.9" stroke-linecap="round" opacity="0.85"/>
+          <ellipse cx="78" cy="58" rx="3.2" ry="2" fill="var(--blush)" opacity="0.55"/>
+          <ellipse cx="104" cy="58" rx="3.2" ry="2" fill="var(--blush)" opacity="0.55"/>
+        </svg>`;
+
+      // ============ B: 大水汪眼·爱心款（最萌） ============
+      const SVG_B = `
+        <svg viewBox="0 0 120 110" class="cat-svg">
+          <ellipse cx="60" cy="103" rx="32" ry="3" fill="rgba(0,0,0,0.20)"/>
+          <!-- 尾巴 -->
+          <path d="M 30 72 Q 8 66, 4 38 Q 4 22, 22 18" stroke="var(--body)" stroke-width="12" fill="none" stroke-linecap="round"/>
+          <!-- 后腿 -->
+          <ellipse cx="48" cy="92" rx="7" ry="8" fill="var(--body-dark)"/>
+          <ellipse cx="78" cy="92" rx="7" ry="8" fill="var(--body-dark)"/>
+          <!-- 身体 -->
+          <ellipse cx="60" cy="78" rx="30" ry="20" fill="var(--body)"/>
+          <ellipse cx="62" cy="86" rx="20" ry="9" fill="var(--belly)" opacity="0.7"/>
+          <!-- 前腿 -->
+          <ellipse cx="52" cy="94" rx="7" ry="7" fill="var(--body)"/>
+          <ellipse cx="82" cy="94" rx="7" ry="7" fill="var(--body)"/>
+          <!-- 头（更圆更大） -->
+          <!-- 耳朵更圆 -->
+          <path d="M 70 32 Q 70 14, 80 18 Q 88 24, 86 36 Z" fill="var(--body)"/>
+          <path d="M 75 28 Q 76 20, 82 22 Q 84 28, 82 32 Z" fill="var(--inner-ear)"/>
+          <path d="M 96 32 Q 100 14, 110 20 Q 112 30, 108 38 Z" fill="var(--body)"/>
+          <path d="M 100 30 Q 102 22, 108 24 Q 108 30, 106 34 Z" fill="var(--inner-ear)"/>
+          <!-- 脸（更圆） -->
+          <ellipse cx="91" cy="54" rx="25" ry="24" fill="var(--body)"/>
+          <!-- 嘴部底色 -->
+          <ellipse cx="91" cy="66" rx="14" ry="9" fill="var(--belly)" opacity="0.75"/>
+          <!-- 大水汪眼（占脸 35%） -->
+          <ellipse cx="81" cy="54" rx="6" ry="8" fill="var(--eye)"/>
+          <ellipse cx="101" cy="54" rx="6" ry="8" fill="var(--eye)"/>
+          <!-- 高光（多个营造水汪汪） -->
+          <ellipse cx="83" cy="50" rx="2.2" ry="3" fill="#FFFFFF"/>
+          <ellipse cx="79.5" cy="56" rx="1" ry="1.2" fill="#FFFFFF"/>
+          <ellipse cx="103" cy="50" rx="2.2" ry="3" fill="#FFFFFF"/>
+          <ellipse cx="99.5" cy="56" rx="1" ry="1.2" fill="#FFFFFF"/>
+          <!-- 大腮红 -->
+          <ellipse cx="76" cy="62" rx="5" ry="3" fill="var(--blush)" opacity="0.7"/>
+          <ellipse cx="106" cy="62" rx="5" ry="3" fill="var(--blush)" opacity="0.7"/>
+          <!-- 鼻子（爱心形） -->
+          <path d="M 88 62 Q 86 60, 89 60 Q 91 62, 91 64 Q 91 62, 93 60 Q 96 60, 94 62 Q 91 66, 91 66 Q 91 66, 88 62 Z" fill="var(--nose)"/>
+          <!-- 微笑嘴 -->
+          <path d="M 91 66 Q 87 72, 83 69" stroke="#3A2A20" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <path d="M 91 66 Q 95 72, 99 69" stroke="#3A2A20" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <!-- 头顶虎斑（少量，淡） -->
+          <path d="M 80 36 Q 84 32, 88 34" stroke="var(--body-dark)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.55"/>
+          <path d="M 95 36 Q 100 32, 103 35" stroke="var(--body-dark)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.55"/>
+          <!-- 胡须 -->
+          <path d="M 74 64 L 62 62" stroke="var(--whisker)" stroke-width="0.9" stroke-linecap="round" opacity="0.85"/>
+          <path d="M 74 66 L 62 68" stroke="var(--whisker)" stroke-width="0.9" stroke-linecap="round" opacity="0.85"/>
+          <path d="M 108 64 L 120 62" stroke="var(--whisker)" stroke-width="0.9" stroke-linecap="round" opacity="0.85"/>
+          <path d="M 108 66 L 120 68" stroke="var(--whisker)" stroke-width="0.9" stroke-linecap="round" opacity="0.85"/>
+        </svg>`;
+
+      // ============ C: 团子圆滚款 ============
+      const SVG_C = `
+        <svg viewBox="0 0 120 110" class="cat-svg">
+          <ellipse cx="60" cy="103" rx="40" ry="3" fill="rgba(0,0,0,0.20)"/>
+          <!-- 尾巴（短小卷起来） -->
+          <path d="M 24 82 Q 8 80, 8 66 Q 10 56, 22 58" stroke="var(--body)" stroke-width="13" fill="none" stroke-linecap="round"/>
+          <!-- 整体一颗圆球：身体即头 -->
+          <ellipse cx="60" cy="68" rx="42" ry="34" fill="var(--body)"/>
+          <!-- 肚子 -->
+          <ellipse cx="62" cy="86" rx="28" ry="11" fill="var(--belly)" opacity="0.65"/>
+          <!-- 短粗腿（几乎是球底凸起） -->
+          <ellipse cx="42" cy="98" rx="9" ry="5" fill="var(--body-dark)"/>
+          <ellipse cx="82" cy="98" rx="9" ry="5" fill="var(--body-dark)"/>
+          <!-- 圆耳朵（小三角，藏在头顶） -->
+          <path d="M 32 38 L 36 22 L 50 38 Z" fill="var(--body)"/>
+          <path d="M 38 34 L 40 28 L 46 34 Z" fill="var(--inner-ear)"/>
+          <path d="M 70 38 L 84 22 L 88 38 Z" fill="var(--body)"/>
+          <path d="M 75 34 L 80 28 L 84 34 Z" fill="var(--inner-ear)"/>
+          <!-- 身体的虎斑（顶部几道） -->
+          <path d="M 38 50 Q 44 46, 50 50" stroke="var(--body-dark)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.55"/>
+          <path d="M 54 46 Q 60 42, 66 46" stroke="var(--body-dark)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.55"/>
+          <path d="M 70 50 Q 76 46, 82 50" stroke="var(--body-dark)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.55"/>
+          <!-- 嘴部底色 -->
+          <ellipse cx="60" cy="74" rx="18" ry="10" fill="var(--belly)" opacity="0.55"/>
+          <!-- 眼睛（大，靠下） -->
+          <ellipse cx="48" cy="62" rx="5" ry="7" fill="var(--eye)"/>
+          <ellipse cx="49.5" cy="60" rx="1.8" ry="2" fill="#FFFFFF"/>
+          <ellipse cx="72" cy="62" rx="5" ry="7" fill="var(--eye)"/>
+          <ellipse cx="73.5" cy="60" rx="1.8" ry="2" fill="#FFFFFF"/>
+          <!-- 鼻子 -->
+          <path d="M 57 70 L 63 70 L 60 73 Z" fill="var(--nose)"/>
+          <!-- 嘴（小三角的 ω） -->
+          <path d="M 60 73 Q 56 78, 53 76" stroke="#3A2A20" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+          <path d="M 60 73 Q 64 78, 67 76" stroke="#3A2A20" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+          <!-- 腮红 -->
+          <ellipse cx="42" cy="70" rx="4" ry="2.4" fill="var(--blush)" opacity="0.7"/>
+          <ellipse cx="78" cy="70" rx="4" ry="2.4" fill="var(--blush)" opacity="0.7"/>
+          <!-- 胡须 -->
+          <path d="M 40 72 L 30 70" stroke="var(--whisker)" stroke-width="0.9" stroke-linecap="round"/>
+          <path d="M 40 74 L 30 76" stroke="var(--whisker)" stroke-width="0.9" stroke-linecap="round"/>
+          <path d="M 80 72 L 90 70" stroke="var(--whisker)" stroke-width="0.9" stroke-linecap="round"/>
+          <path d="M 80 74 L 90 76" stroke="var(--whisker)" stroke-width="0.9" stroke-linecap="round"/>
+        </svg>`;
+
+      // ============ D: 抱手蹲坐款 ============
+      const SVG_D = `
+        <svg viewBox="0 0 120 110" class="cat-svg">
+          <ellipse cx="60" cy="103" rx="36" ry="3" fill="rgba(0,0,0,0.20)"/>
+          <!-- 尾巴（绕到身前侧面，加圆弧） -->
+          <path d="M 88 90 Q 100 88, 102 76 Q 100 64, 90 68" stroke="var(--body)" stroke-width="11" fill="none" stroke-linecap="round"/>
+          <path d="M 88 90 Q 100 88, 102 76 Q 100 64, 90 68" stroke="var(--body-dark)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.45" stroke-dasharray="3 5"/>
+          <!-- 身体（梨形蹲坐） -->
+          <path d="M 32 95 Q 28 60, 60 56 Q 92 60, 88 95 Z" fill="var(--body)"/>
+          <!-- 后腿（圆球露在身体下方两侧） -->
+          <ellipse cx="36" cy="96" rx="9" ry="5" fill="var(--body-dark)"/>
+          <ellipse cx="84" cy="96" rx="9" ry="5" fill="var(--body-dark)"/>
+          <!-- 前腿（并拢在前方） -->
+          <rect x="50" y="78" width="8" height="22" rx="4" fill="var(--body)"/>
+          <rect x="62" y="78" width="8" height="22" rx="4" fill="var(--body)"/>
+          <ellipse cx="54" cy="99" rx="5.5" ry="2.5" fill="var(--body)"/>
+          <ellipse cx="66" cy="99" rx="5.5" ry="2.5" fill="var(--body)"/>
+          <!-- 肚子 -->
+          <ellipse cx="60" cy="88" rx="18" ry="10" fill="var(--belly)" opacity="0.6"/>
+          <!-- 头 -->
+          <path d="M 40 38 L 44 18 L 56 36 Z" fill="var(--body)"/>
+          <path d="M 44 34 L 46 24 L 54 33 Z" fill="var(--inner-ear)"/>
+          <path d="M 64 36 L 76 18 L 80 38 Z" fill="var(--body)"/>
+          <path d="M 67 33 L 72 24 L 76 33 Z" fill="var(--inner-ear)"/>
+          <circle cx="60" cy="48" r="24" fill="var(--body)"/>
+          <!-- 虎斑 -->
+          <path d="M 46 32 Q 50 30, 54 32" stroke="var(--body-dark)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.65"/>
+          <path d="M 66 32 Q 70 30, 74 32" stroke="var(--body-dark)" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.65"/>
+          <path d="M 60 26 L 60 34" stroke="var(--body-dark)" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.65"/>
+          <!-- 嘴部底色 -->
+          <ellipse cx="60" cy="58" rx="12" ry="8" fill="var(--belly)" opacity="0.65"/>
+          <!-- 眼睛 -->
+          <ellipse cx="52" cy="48" rx="4.2" ry="6" fill="var(--eye)"/>
+          <ellipse cx="53.3" cy="46" rx="1.4" ry="1.6" fill="#FFFFFF"/>
+          <ellipse cx="68" cy="48" rx="4.2" ry="6" fill="var(--eye)"/>
+          <ellipse cx="69.3" cy="46" rx="1.4" ry="1.6" fill="#FFFFFF"/>
+          <!-- 鼻子 -->
+          <path d="M 57 54 L 63 54 L 60 57 Z" fill="var(--nose)"/>
+          <!-- 嘴 -->
+          <path d="M 60 57 Q 56 61, 53 59" stroke="#3A2A20" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+          <path d="M 60 57 Q 64 61, 67 59" stroke="#3A2A20" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+          <!-- 腮红 -->
+          <ellipse cx="46" cy="54" rx="3.2" ry="2" fill="var(--blush)" opacity="0.6"/>
+          <ellipse cx="74" cy="54" rx="3.2" ry="2" fill="var(--blush)" opacity="0.6"/>
+          <!-- 胡须 -->
+          <path d="M 45 56 L 33 54" stroke="var(--whisker)" stroke-width="0.9" stroke-linecap="round" opacity="0.85"/>
+          <path d="M 45 58 L 33 60" stroke="var(--whisker)" stroke-width="0.9" stroke-linecap="round" opacity="0.85"/>
+          <path d="M 75 56 L 87 54" stroke="var(--whisker)" stroke-width="0.9" stroke-linecap="round" opacity="0.85"/>
+          <path d="M 75 58 L 87 60" stroke="var(--whisker)" stroke-width="0.9" stroke-linecap="round" opacity="0.85"/>
+        </svg>`;
+
+      document.getElementById("cat-a").innerHTML = SVG_A;
+      document.getElementById("cat-b").innerHTML = SVG_B;
+      document.getElementById("cat-c").innerHTML = SVG_C;
+      document.getElementById("cat-d").innerHTML = SVG_D;
+    </script>
+  </body>
+</html>

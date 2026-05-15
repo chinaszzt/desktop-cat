@@ -1,0 +1,256 @@
+/* CatDeskPet — fully transparent desktop overlay */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
+}
+
+#stage {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* ===== The cat ===== */
+#cat {
+  position: absolute;
+  left: 200px;
+  top: 200px;
+  width: 120px;
+  height: 110px;
+  pointer-events: auto;
+  cursor: pointer;
+  transform-origin: 60px 90px;
+  filter: drop-shadow(0 6px 4px rgba(0, 0, 0, 0.18));
+  will-change: transform, left, top;
+}
+
+/* Body floats up/down while walking */
+#cat-body {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+#cat-body svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Color palettes (CSS variables) */
+#cat[data-color="orange"] {
+  --body: #F4A56B;
+  --body-dark: #C66A2C;
+  --belly: #FFF1DC;
+  --inner-ear: #FFB8C1;
+  --nose: #E36B7A;
+  --eye: #2D1A0A;
+  --whisker: #5A3A24;
+  --blush: #FFB3BA;
+}
+#cat[data-color="calico"] {
+  --body: #FFF1DC;
+  --body-dark: #2C2828;
+  --accent: #F4A56B;
+  --belly: #FFFFFF;
+  --inner-ear: #FFB8C1;
+  --nose: #E36B7A;
+  --eye: #2D1A0A;
+  --whisker: #6A5A4A;
+  --blush: #FFB3BA;
+}
+#cat[data-color="cow"] {
+  --body: #FFFFFF;
+  --body-dark: #2C2828;
+  --belly: #FFFFFF;
+  --inner-ear: #FFB8C1;
+  --nose: #FF85A1;
+  --eye: #2D1A0A;
+  --whisker: #6A5A4A;
+  --blush: #FFB3BA;
+}
+#cat[data-color="tabby"] {
+  --body: #A89E91;
+  --body-dark: #5C544A;
+  --belly: #DAD2C6;
+  --inner-ear: #E8A8B0;
+  --nose: #3C3530;
+  --eye: #1A1A1A;
+  --whisker: #FFFFFF;
+  --blush: #FFB3BA;
+}
+#cat[data-color="tuxedo"] {
+  --body: #2A2828;
+  --body-dark: #000000;
+  --belly: #FFFFFF;
+  --inner-ear: #FFB8C1;
+  --nose: #FF85A1;
+  --eye: #FFD23B;
+  --whisker: #FFFFFF;
+  --blush: #FFB3BA;
+}
+
+/* Hide pattern overlays except the active one */
+.pattern { display: none; }
+#cat[data-color="orange"] .pattern-stripes,
+#cat[data-color="tabby"]  .pattern-stripes,
+#cat[data-color="calico"] .pattern-patches,
+#cat[data-color="cow"]    .pattern-cow,
+#cat[data-color="tuxedo"] .pattern-tuxedo {
+  display: inline;
+}
+
+/* ===== Speech bubble ===== */
+#bubble {
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translateX(-50%) scale(1);
+  background: white;
+  color: #3A2A20;
+  padding: 6px 12px;
+  border-radius: 18px;
+  font-family: "PingFang SC", "Hiragino Sans GB", sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+  pointer-events: none;
+  animation: bubble-pop 0.9s ease-out;
+}
+#bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  background: white;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+#bubble.hidden { display: none; }
+
+@keyframes bubble-pop {
+  0%   { transform: translateX(-50%) scale(0.4); opacity: 0; }
+  30%  { transform: translateX(-50%) scale(1.15); opacity: 1; }
+  60%  { transform: translateX(-50%) scale(1); }
+  100% { transform: translateX(-50%) scale(1); opacity: 1; }
+}
+
+/* Hover glow */
+#cat:hover {
+  filter: drop-shadow(0 6px 4px rgba(0,0,0,0.18)) drop-shadow(0 0 6px rgba(255, 200, 120, 0.6));
+}
+
+/* ===== Right-click context menu ===== */
+#ctx-menu {
+  position: absolute;
+  background: rgba(255, 252, 248, 0.98);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(80, 40, 0, 0.18), 0 1px 0 rgba(255,255,255,0.6) inset;
+  padding: 5px 0;
+  pointer-events: auto;
+  font-family: "PingFang SC", "Hiragino Sans GB", -apple-system, sans-serif;
+  font-size: 13px;
+  color: #3A2A20;
+  min-width: 150px;
+  user-select: none;
+  -webkit-user-select: none;
+  z-index: 100;
+}
+#ctx-menu.hidden { display: none; }
+.ctx-group {
+  padding: 6px 14px 4px;
+  font-size: 11px;
+  color: #B89070;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.ctx-item {
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background 0.08s;
+}
+.ctx-item:hover { background: #FFE7C5; }
+.ctx-item.ctx-danger { color: #C24A4A; }
+.ctx-item.ctx-danger:hover { background: #FFDCDC; }
+.ctx-sep {
+  height: 1px;
+  background: #F0E0CC;
+  margin: 4px 0;
+}
+
+/* ===== Holiday hat ===== */
+#hat {
+  position: absolute;
+  left: 50%;
+  top: -8px;
+  transform: translateX(-50%);
+  font-size: 32px;
+  pointer-events: none;
+  z-index: 3;
+  line-height: 1;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.18));
+}
+#hat.hidden { display: none; }
+
+/* ===== Toy ball ===== */
+#toy {
+  position: absolute;
+  font-size: 38px;
+  pointer-events: none;
+  z-index: 1;
+  line-height: 1;
+  filter: drop-shadow(0 4px 4px rgba(0,0,0,0.18));
+  animation: toy-spawn 0.4s cubic-bezier(.3,1.6,.6,1);
+  will-change: transform, left, top;
+}
+#toy.hidden { display: none; }
+@keyframes toy-spawn {
+  0% { transform: scale(0) rotate(-30deg); }
+  60% { transform: scale(1.2) rotate(20deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+/* ===== Feed item ===== */
+#feed-emoji {
+  position: absolute;
+  font-size: 44px;
+  pointer-events: none;
+  z-index: 1;
+  line-height: 1;
+  filter: drop-shadow(0 4px 4px rgba(0,0,0,0.18));
+  animation: feed-spawn 0.45s cubic-bezier(.3,1.7,.6,1);
+}
+#feed-emoji.hidden { display: none; }
+@keyframes feed-spawn {
+  0% { transform: scale(0) translateY(-30px); }
+  60% { transform: scale(1.25) translateY(0); }
+  100% { transform: scale(1); }
+}
+
+/* ===== Photo flash overlay ===== */
+#flash {
+  position: fixed;
+  inset: 0;
+  background: white;
+  pointer-events: none;
+  z-index: 200;
+  opacity: 0;
+}
+#flash.shoot { animation: flash-anim 0.45s ease-out; }
+@keyframes flash-anim {
+  0%, 100% { opacity: 0; }
+  15%      { opacity: 0.95; }
+}

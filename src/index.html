@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CatDeskPet</title>
+    <script type="module" src="/main.js" defer></script>
+  </head>
+  <body>
+    <div id="stage">
+      <div id="cat" data-color="orange" data-facing="right">
+        <div id="hat" class="hidden"></div>
+        <div id="bubble" class="hidden"><span id="bubble-text">喵~</span></div>
+        <div id="cat-body"></div>
+      </div>
+      <div id="toy" class="hidden">🧶</div>
+      <div id="feed-emoji" class="hidden">🐟</div>
+      <div id="flash" class="hidden"></div>
+      <div id="ctx-menu" class="hidden">
+        <div class="ctx-group">🎨 换毛色</div>
+        <div class="ctx-item" data-color="orange">🟠 橘猫</div>
+        <div class="ctx-item" data-color="calico">🐱 三花</div>
+        <div class="ctx-item" data-color="cow">🐮 奶牛</div>
+        <div class="ctx-item" data-color="tabby">🩶 灰虎斑</div>
+        <div class="ctx-item" data-color="tuxedo">🎩 黑白</div>
+        <div class="ctx-sep"></div>
+        <div class="ctx-item" data-act="sleep">💤 让她睡一下</div>
+        <div class="ctx-item" data-act="photo">📸 拍照模式</div>
+        <div class="ctx-item" data-act="toy">🧶 丢个玩具</div>
+        <div class="ctx-sep"></div>
+        <div class="ctx-item ctx-danger" data-act="quit">退出</div>
+      </div>
+    </div>
+  </body>
+</html>
