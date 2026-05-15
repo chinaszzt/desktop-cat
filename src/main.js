@@ -597,6 +597,17 @@ const TOY_PHYS = {
   paper: { friction: 0.0024, gravity: 0.0009, bounce: 0.35, spin: true,  hits: 3 },
 };
 
+function cancelToy(now) {
+  if (!state.toy) return;
+  toyEl.classList.add("hidden");
+  state.toy = null;
+  if (state.mode === "playing") {
+    state.mode = "walking";
+    pickNewTarget();
+    startWalkLeg(now, false);
+  }
+}
+
 function pickToyType() {
   const r = Math.random();
   if (r < 0.30) return "yarn";
@@ -2021,6 +2032,8 @@ window.addEventListener("DOMContentLoaded", () => {
     } else if (act === "toy") {
       const type = item.dataset.toy || undefined;
       spawnToy(performance.now(), type);
+    } else if (act === "toy-cancel") {
+      cancelToy(performance.now());
     } else if (act === "quit") {
       invoke("quit_app").catch(() => {});
     }
@@ -2033,7 +2046,10 @@ window.addEventListener("DOMContentLoaded", () => {
     if (!ctxMenuEl.contains(e.target)) hideCtxMenu();
   }, true);
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") hideCtxMenu();
+    if (e.key === "Escape") {
+      hideCtxMenu();
+      if (state.toy) cancelToy(performance.now());
+    }
   });
 
   listen("cursor", (event) => {
