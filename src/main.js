@@ -581,23 +581,147 @@ function spawnFeed(now) {
   state.chase = null; state.jump = null;
 }
 
-function spawnToy(now) {
+const TOY_EMOJI = {
+  yarn:  "🧶",
+  ball:  "⚽",
+  paper: "📄",
+  mouse: "🐭",
+  laser: "🔴",
+  wand:  "🪶",
+};
+
+// physics params per toy type
+const TOY_PHYS = {
+  yarn:  { friction: 0.0012, gravity: 0.0009, bounce: 0.62, spin: true,  hits: 4 },
+  ball:  { friction: 0.0006, gravity: 0.0010, bounce: 0.80, spin: false, hits: 5 },
+  paper: { friction: 0.0024, gravity: 0.0009, bounce: 0.35, spin: true,  hits: 3 },
+};
+
+function pickToyType() {
+  const r = Math.random();
+  if (r < 0.30) return "yarn";
+  if (r < 0.48) return "ball";
+  if (r < 0.62) return "paper";
+  if (r < 0.78) return "mouse";
+  if (r < 0.90) return "laser";
+  return "wand";
+}
+
+function spawnToy(now, type) {
   if (state.toy) return;
   if (state.mode === "sleeping") wakeUp(now);
+  type = type || pickToyType();
+
   const b = bounds();
-  const tx = clamp(state.x + rand(-300, 300), b.minX + 50, b.maxX - 50);
-  const ty = clamp(state.y + rand(-200, 200), b.minY + 50, b.maxY - 50);
-  state.toy = { x: tx, y: ty, hits: 0, target: 3 + Math.floor(Math.random() * 3), t0: now, expireT: now + 30000 };
+  let tx, ty;
+  if (type === "laser" || type === "wand") {
+    tx = state.cursor.ts ? state.cursor.x : (state.x + 150);
+    ty = state.cursor.ts ? state.cursor.y : (state.y + 50);
+  } else {
+    tx = clamp(state.x + rand(-280, 280), b.minX + 40, b.maxX - 40);
+    ty = clamp(state.y + rand(-180, 180), b.minY + 40, b.maxY - 40);
+  }
+
+  state.toy = {
+    type, x: tx, y: ty,
+    vx: 0, vy: 0,
+    spin: 0, spinVel: 0,
+    hits: 0, target: (TOY_PHYS[type] && TOY_PHYS[type].hits) || (type === "mouse" ? 3 : 99),
+    t0: now,
+    expireT: now + (type === "laser" || type === "wand" ? 18000 : 30000),
+    swatT0: 0,
+    ratNextT: 0,
+  };
   state.lastToySpawnT = now;
-  toyEl.style.left = (tx + 30) + "px";
-  toyEl.style.top  = (ty + 30) + "px";
+
+  toyEl.textContent = TOY_EMOJI[type] || "🧶";
+  toyEl.setAttribute("data-type", type);
+  toyEl.style.left = tx + "px";
+  toyEl.style.top  = ty + "px";
+  toyEl.style.transform = "translate(-50%, -50%) scale(0)";
   toyEl.classList.remove("hidden");
-  toyEl.style.animation = "none"; void toyEl.offsetWidth; toyEl.style.animation = "";
+  // pop-in
+  requestAnimationFrame(() => {
+    toyEl.style.transition = "transform 0.32s cubic-bezier(.3,1.7,.5,1)";
+    toyEl.style.transform = "translate(-50%, -50%) scale(1)";
+    setTimeout(() => { toyEl.style.transition = ""; }, 360);
+  });
+
   state.mode = "playing";
   state.modeStartT = now;
   state.targetX = tx - CAT_W / 2 + 20;
   state.targetY = ty - CAT_H / 2 + 30;
-  state.modeUntil = now + 20000;
+  state.modeUntil = now + 25000;
+}
+
+// physics step for the active toy (independent of cat mode)
+function physToy(dt, now) {
+  if (!state.toy) return;
+  const t = state.toy;
+  if (t.type === "yarn" || t.type === "ball" || t.type === "paper") {
+    const p = TOY_PHYS[t.type];
+    // gravity
+    t.vy += p.gravity * dt;
+    // friction (linear-ish on speed)
+    const sp = Math.hypot(t.vx, t.vy);
+    if (sp > 0) {
+      const decel = p.friction * dt;
+      const newSp = Math.max(0, sp - decel);
+      const k = newSp / sp;
+      t.vx *= k; t.vy *= k;
+    }
+    // integrate
+    t.x += t.vx * dt;
+    t.y += t.vy * dt;
+    // walls
+    const b = bounds();
+    if (t.x < b.minX) { t.x = b.minX; t.vx = -t.vx * p.bounce; }
+    if (t.x > b.maxX) { t.x = b.maxX; t.vx = -t.vx * p.bounce; }
+    if (t.y < b.minY) { t.y = b.minY; t.vy = -t.vy * p.bounce; }
+    if (t.y > b.maxY) {
+      t.y = b.maxY;
+      t.vy = -t.vy * p.bounce;
+      // ground friction kicks in
+      t.vx *= 0.94;
+    }
+    // spin
+    if (p.spin) {
+      t.spin += (t.spinVel || 0) * dt;
+      // air drag on spin
+      t.spinVel *= 0.998;
+    }
+    // hard stop
+    if (Math.hypot(t.vx, t.vy) < 0.006 && Math.abs(t.y - bounds().maxY) < 1) {
+      t.vx = 0; t.vy = 0; t.spinVel = 0;
+    }
+  } else if (t.type === "mouse") {
+    if (!t.ratNextT || now > t.ratNextT) {
+      const b = bounds();
+      t.ratX = clamp(t.x + rand(-220, 220), b.minX, b.maxX);
+      t.ratY = clamp(t.y + rand(-120, 120), b.minY, b.maxY);
+      t.ratNextT = now + rand(900, 1700);
+      t.spinVel = rand(-0.4, 0.4);
+    }
+    const dx = (t.ratX || t.x) - t.x;
+    const dy = (t.ratY || t.y) - t.y;
+    const d = Math.hypot(dx, dy);
+    if (d > 4) {
+      const sp = 0.18;
+      t.x += (dx / d) * sp * dt;
+      t.y += (dy / d) * sp * dt;
+      t.spin += (t.spinVel || 0) * dt;
+    }
+  } else if (t.type === "laser" || t.type === "wand") {
+    // follow the cursor
+    if (state.cursor.ts) { t.x = state.cursor.x; t.y = state.cursor.y; }
+    // pulse for laser (size feel)
+    t.spin = (now / (t.type === "laser" ? 200 : 500)) % 360;
+  }
+
+  // mirror toy's screen position to DOM
+  toyEl.style.left = t.x + "px";
+  toyEl.style.top  = t.y + "px";
+  toyEl.style.transform = `translate(-50%, -50%) rotate(${t.spin || 0}deg)`;
 }
 
 function takePhoto(now) {
@@ -714,6 +838,9 @@ function tick(now) {
     triggerBlink();
     lastBlink = now;
   }
+
+  // ---- toy physics (independent of cat mode) ----
+  physToy(dt, now);
 
   // ---- global feed/toy expiry (independent of mode, so tricks can't strand them) ----
   if (state.feed && now > state.feed.expireT) {
@@ -1018,32 +1145,58 @@ function tick(now) {
       state.toy = null;
       state.mode = "walking"; pickNewTarget(); startWalkLeg(now, false);
     } else {
-      const tdx = state.toy.x - 20 - state.x;
-      const tdy = state.toy.y - 30 - state.y;
+      const t = state.toy;
+      // cat aims at toy center
+      const tdx = t.x - (state.x + CAT_W / 2);
+      const tdy = t.y - (state.y + CAT_H / 2 - 10);
       const tdist = Math.hypot(tdx, tdy);
-      if (tdist < 35) {
-        // close → swat the toy on a short cooldown
-        if (!state.toy.swatT0) state.toy.swatT0 = now;
-        if (now - state.toy.swatT0 > 550) {
-          state.toy.hits += 1;
-          state.toy.swatT0 = now;
-          // toy bounces to a new spot nearby
-          const b = bounds();
-          state.toy.x = clamp(state.toy.x + rand(-90, 90), b.minX + 20, b.maxX - 20);
-          state.toy.y = clamp(state.toy.y + rand(-50, 50), b.minY + 20, b.maxY - 20);
-          toyEl.style.left = (state.toy.x + 30) + "px";
-          toyEl.style.top  = (state.toy.y + 30) + "px";
-          if (state.toy.hits >= state.toy.target) {
+      const toySpeed = Math.hypot(t.vx || 0, t.vy || 0);
+
+      if (tdist < 38 && toySpeed < 0.15) {
+        // close + toy mostly settled → swat
+        if (!t.swatT0) t.swatT0 = now;
+        if (now - t.swatT0 > 520) {
+          state.facing = tdx > 0 ? 1 : -1;
+          t.swatT0 = 0;
+
+          if (t.type === "yarn" || t.type === "ball" || t.type === "paper") {
+            // physics impulse
+            const power = t.type === "ball" ? 0.55 : t.type === "yarn" ? 0.42 : 0.32;
+            t.vx = state.facing * power + rand(-0.06, 0.06);
+            t.vy = -(0.18 + Math.random() * 0.18);  // pop up
+            t.spinVel = rand(-0.7, 0.7);
+            t.hits += 1;
+          } else if (t.type === "mouse") {
+            // mouse darts away
+            const b = bounds();
+            const dirx = state.facing;
+            t.ratX = clamp(t.x + dirx * rand(120, 220), b.minX, b.maxX);
+            t.ratY = clamp(t.y + rand(-60, 60), b.minY, b.maxY);
+            t.ratNextT = now + rand(400, 900);  // commit to dash
+            t.hits += 1;
+          } else if (t.type === "laser" || t.type === "wand") {
+            // no impulse — cat just bats at the air; doesn't count toward hits
+          }
+
+          if (t.target && t.hits >= t.target) {
             toyEl.classList.add("hidden");
             state.toy = null;
-            showBubble("玩够了~", 1200);
+            const msgs = {
+              yarn: "玩够了~", ball: "嘿!", paper: "...", mouse: "抓住啦!",
+            };
+            showBubble(msgs[t.type] || "玩够了~", 1200);
             state.mode = "walking"; pickNewTarget(); startWalkLeg(now, false);
           }
         }
       } else {
-        const sp = BASE_SPEED_RUN;
-        state.x += (tdx / tdist) * sp * dt;
-        state.y += (tdy / tdist) * sp * dt;
+        // chase toy
+        const sp = (t.type === "laser" || t.type === "wand")
+          ? BASE_SPEED_RUN * 1.2
+          : BASE_SPEED_RUN;
+        if (tdist > 4) {
+          state.x += (tdx / tdist) * sp * dt;
+          state.y += (tdy / tdist) * sp * dt;
+        }
         moving = true; moveDx = tdx;
       }
     }
@@ -1866,7 +2019,8 @@ window.addEventListener("DOMContentLoaded", () => {
     } else if (act === "photo") {
       takePhoto(performance.now());
     } else if (act === "toy") {
-      spawnToy(performance.now());
+      const type = item.dataset.toy || undefined;
+      spawnToy(performance.now(), type);
     } else if (act === "quit") {
       invoke("quit_app").catch(() => {});
     }
