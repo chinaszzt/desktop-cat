@@ -748,6 +748,14 @@ function tick(now) {
     if (Math.random() < 0.5) showBubble(pick(["喵?", "喵...", "嗯?", "..."]), 1100);
   }
 
+  // ---- cursor-derived constants (used by env detection AND mode transitions below) ----
+  const cursorAlive = now - state.cursor.ts < 400;
+  const catCx_g = state.x + CAT_W / 2;
+  const catCy_g = state.y + CAT_H / 2;
+  const cdx_g = state.cursor.x - catCx_g;
+  const cdy_g = state.cursor.y - catCy_g;
+  const cdist_g = Math.hypot(cdx_g, cdy_g);
+
   // ---- swat_cursor: mouse parked near the cat for a few seconds ----
   if (cursorAlive && state.cursorMoveAmt < 14 && (state.mode === "walking" || state.mode === "idle")) {
     // approximate dist for trigger; we use the existing cdist later (computed below); recompute cheap here:
@@ -836,12 +844,9 @@ function tick(now) {
     }
   }
 
-  const cursorAlive = now - state.cursor.ts < 400;
-  const catCx = state.x + CAT_W / 2;
-  const catCy = state.y + CAT_H / 2;
-  const cdx = state.cursor.x - catCx;
-  const cdy = state.cursor.y - catCy;
-  const cdist = Math.hypot(cdx, cdy);
+  // reuse the values computed at the top of tick
+  const catCx = catCx_g, catCy = catCy_g;
+  const cdx = cdx_g, cdy = cdy_g, cdist = cdist_g;
 
   // ---- mode transitions for cursor interest ----
   const cursorActive = state.cursorMoveAmt > 60;
