@@ -582,13 +582,39 @@ function spawnFeed(now) {
 }
 
 const TOY_EMOJI = {
-  yarn:  "🧶",
   ball:  "⚽",
   paper: "📄",
   mouse: "🐭",
   laser: "🔴",
   wand:  "🪶",
 };
+
+// hand-drawn yarn ball — cartoon style, no emoji-renderer surprises
+const YARN_SVG = `
+<svg viewBox="0 0 56 60" width="56" height="60" overflow="visible">
+  <ellipse cx="28" cy="56" rx="16" ry="2.5" fill="rgba(0,0,0,0.20)"/>
+  <circle cx="28" cy="26" r="20" fill="#F4A8B0"/>
+  <ellipse cx="22" cy="20" rx="7" ry="5" fill="#FFD0D9" opacity="0.75"/>
+  <g stroke="#C24E6F" stroke-width="1.7" fill="none" stroke-linecap="round" opacity="0.9">
+    <path d="M 10 26 Q 28 8, 46 28"/>
+    <path d="M 8 30 Q 28 50, 48 28"/>
+    <path d="M 14 12 Q 30 30, 44 44"/>
+    <path d="M 14 42 Q 28 22, 44 10"/>
+    <path d="M 28 8 Q 8 28, 28 46"/>
+  </g>
+  <path d="M 44 30 Q 52 36, 54 48" stroke="#C24E6F" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <circle cx="54" cy="48" r="1.6" fill="#C24E6F"/>
+</svg>`;
+
+function setToyVisual(type) {
+  toyEl.setAttribute("data-type", type);
+  if (type === "yarn") {
+    toyEl.innerHTML = YARN_SVG;
+  } else {
+    toyEl.innerHTML = "";
+    toyEl.textContent = TOY_EMOJI[type] || "?";
+  }
+}
 
 // physics params per toy type
 const TOY_PHYS = {
@@ -645,8 +671,7 @@ function spawnToy(now, type) {
   };
   state.lastToySpawnT = now;
 
-  toyEl.textContent = TOY_EMOJI[type] || "🧶";
-  toyEl.setAttribute("data-type", type);
+  setToyVisual(type);
   toyEl.style.left = tx + "px";
   toyEl.style.top  = ty + "px";
   toyEl.style.transform = "translate(-50%, -50%) scale(0)";
@@ -723,16 +748,28 @@ function physToy(dt, now) {
       t.spin += (t.spinVel || 0) * dt;
     }
   } else if (t.type === "laser" || t.type === "wand") {
-    // follow the cursor
-    if (state.cursor.ts) { t.x = state.cursor.x; t.y = state.cursor.y; }
-    // pulse for laser (size feel)
-    t.spin = (now / (t.type === "laser" ? 200 : 500)) % 360;
+    // follow the cursor with a tiny lag so it looks alive
+    if (state.cursor.ts) {
+      const k = 1 - Math.pow(0.5, dt / (t.type === "laser" ? 30 : 80));
+      t.x += (state.cursor.x - t.x) * k;
+      t.y += (state.cursor.y - t.y) * k;
+    }
+    if (t.type === "wand") {
+      t.spin = Math.sin(now / 380) * 22;   // gentle feather sway
+    }
   }
 
   // mirror toy's screen position to DOM
   toyEl.style.left = t.x + "px";
   toyEl.style.top  = t.y + "px";
-  toyEl.style.transform = `translate(-50%, -50%) rotate(${t.spin || 0}deg)`;
+  let tform = "translate(-50%, -50%)";
+  if (t.type === "laser") {
+    const pulse = 1 + Math.sin(now / 110) * 0.18;
+    tform += ` scale(${pulse})`;
+  } else {
+    tform += ` rotate(${t.spin || 0}deg)`;
+  }
+  toyEl.style.transform = tform;
 }
 
 function takePhoto(now) {
@@ -1157,13 +1194,36 @@ function tick(now) {
       state.mode = "walking"; pickNewTarget(); startWalkLeg(now, false);
     } else {
       const t = state.toy;
-      // cat aims at toy center
       const tdx = t.x - (state.x + CAT_W / 2);
       const tdy = t.y - (state.y + CAT_H / 2 - 10);
       const tdist = Math.hypot(tdx, tdy);
       const toySpeed = Math.hypot(t.vx || 0, t.vy || 0);
 
-      if (tdist < 38 && toySpeed < 0.15) {
+      // --- laser / wand: chase + pounce (cursor-driven, never depletes) ---
+      if (t.type === "laser" || t.type === "wand") {
+        const isLaser = t.type === "laser";
+        const closeR  = isLaser ? 75 : 95;
+        const cooldown = isLaser ? 620 : 950;
+        if (tdist < closeR) {
+          if (!t.lastSwatT || now - t.lastSwatT > cooldown) {
+            t.lastSwatT = now;
+            t.swatT0 = now;
+            state.facing = tdx > 0 ? 1 : -1;
+            if (isLaser) {
+              // 激光：每次都短跳扑
+              state.jump = { t0: now, dur: 420, height: 18 };
+            } else if (Math.random() < 0.55) {
+              // 逗猫棒：偶尔大跳够羽毛
+              state.jump = { t0: now, dur: 560, height: 36 };
+            }
+          }
+        } else {
+          const sp = BASE_SPEED_RUN * (isLaser ? 1.45 : 1.10);
+          state.x += (tdx / tdist) * sp * dt;
+          state.y += (tdy / tdist) * sp * dt;
+          moving = true; moveDx = tdx;
+        }
+      } else if (tdist < 38 && toySpeed < 0.15) {
         // close + toy mostly settled → swat
         if (!t.swatT0) t.swatT0 = now;
         if (now - t.swatT0 > 520) {
@@ -1627,15 +1687,22 @@ function tick(now) {
     bodyTilt = -8 * state.facing;
     bodyBob = Math.sin(now / 200) * 1.2;
   } else if (state.mode === "playing" && state.toy && state.toy.swatT0) {
-    // swat the toy mid-strike
-    const t = (now - state.toy.swatT0) / 550;
-    if (t < 0.4) {
-      const k = Math.sin(t / 0.4 * Math.PI);
-      bodyTilt += -12 * state.facing * k;
-      const ext = 12 * k;
-      if (state.facing > 0) legFRY = -ext * 0.7;
-      else legFLY = -ext * 0.7;
-      mouthOpenOpacity = 1; mouthScaleY = 1.3; eyeScaleY = 1.15;
+    // swat / pounce on the toy
+    const swatDur = (state.toy.type === "laser" || state.toy.type === "wand") ? 380 : 520;
+    const t = (now - state.toy.swatT0) / swatDur;
+    if (t < 1.0) {
+      const k = Math.sin(clamp(t, 0, 1) * Math.PI);
+      bodyTilt += -14 * state.facing * k;
+      // paw shoots forward (use the swatPawShift system used by chasing swat)
+      swatPawShiftX = 16 * k;
+      swatPawShiftY = -7 * k;
+      swatPawWhich = state.facing > 0 ? "fr" : "fl";
+      mouthOpenOpacity = 1;
+      mouthScaleY = 1.4;
+      eyeScaleY = 1.18;
+    } else {
+      // clean up swat marker after animation
+      state.toy.swatT0 = 0;
     }
   } else if (state.mode === "clingy" && state.clingyShown) {
     // sit beside user, slow tail wag, half-lid

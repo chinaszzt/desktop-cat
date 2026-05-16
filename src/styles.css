@@ -238,10 +238,16 @@ html, body {
 }
 #toy.hidden { display: none; }
 #toy[data-type="laser"] {
-  font-size: 22px;
-  filter: drop-shadow(0 0 8px #ff3030) drop-shadow(0 0 16px #ff3030);
+  font-size: 20px;
+  filter: drop-shadow(0 0 8px #ff3030) drop-shadow(0 0 18px #ff5050);
 }
 #toy[data-type="wand"] { font-size: 44px; }
+#toy[data-type="yarn"] svg {
+  width: 56px;
+  height: 60px;
+  display: block;
+  overflow: visible;
+}
 
 /* ===== Feed item ===== */
 #feed-emoji {
