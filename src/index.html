@@ -36,6 +36,7 @@
         <div id="hat" class="hidden"></div>
         <div id="bubble" class="hidden"><span id="bubble-text">喵~</span></div>
         <div id="cat-body"></div>
+        <div id="bed-body" class="hidden"></div>
       </div>
       <div id="toy" class="hidden">🧶</div>
       <div id="feed-emoji" class="hidden">🐟</div>
@@ -59,36 +60,59 @@
           <div class="info-status">溜达中~</div>
         </div>
         <div class="ctx-sep"></div>
-        <div class="ctx-group">🐾 动物</div>
-        <div class="ctx-item" data-act="species" data-species="cat">🐈 猫</div>
-        <div class="ctx-item" data-act="species" data-species="pig">🐷 猪</div>
-        <div class="ctx-item" data-act="species" data-species="bear">🐻 熊</div>
-        <div class="ctx-sep"></div>
-        <div class="ctx-group">🎨 毛色</div>
-        <div class="ctx-item color-cat" data-color="orange">🟠 橘猫</div>
-        <div class="ctx-item color-cat" data-color="calico">🐱 三花</div>
-        <div class="ctx-item color-cat" data-color="cow">🐮 奶牛</div>
-        <div class="ctx-item color-cat" data-color="tabby">🩶 灰虎斑</div>
-        <div class="ctx-item color-cat" data-color="tuxedo">🎩 黑白</div>
-        <div class="ctx-item color-pig"  data-color="pink">🌸 粉猪</div>
-        <div class="ctx-item color-pig"  data-color="cream">🥛 奶白猪</div>
-        <div class="ctx-item color-bear" data-color="brown">🟫 棕熊</div>
-        <div class="ctx-item color-bear" data-color="black">⬛ 黑熊</div>
-        <div class="ctx-item color-bear" data-color="polar">⬜ 北极熊</div>
-        <div class="ctx-sep"></div>
-        <div class="ctx-item" data-act="sleep">💤 让她睡一下</div>
-        <div class="ctx-item" data-act="go-home">🏠 回窝睡觉</div>
-        <div class="ctx-item" data-act="feed">🍴 投食</div>
-        <div class="ctx-item" data-act="photo">📸 拍照模式</div>
-        <div class="ctx-sep"></div>
-        <div class="ctx-group">🧸 丢玩具</div>
-        <div class="ctx-item" data-act="toy" data-toy="yarn">🧶 毛线球</div>
-        <div class="ctx-item" data-act="toy" data-toy="ball">⚽ 弹力球</div>
-        <div class="ctx-item" data-act="toy" data-toy="paper">📄 纸团</div>
-        <div class="ctx-item" data-act="toy" data-toy="mouse">🐭 假老鼠</div>
-        <div class="ctx-item" data-act="toy" data-toy="laser">🔴 激光笔</div>
-        <div class="ctx-item" data-act="toy" data-toy="wand">🪶 逗猫棒</div>
-        <div class="ctx-item" data-act="toy-cancel">❌ 收起玩具</div>
+
+        <div class="ctx-item has-sub">
+          <span class="sub-label">🐾 动物</span>
+          <span class="sub-arrow">▸</span>
+          <div class="ctx-submenu">
+            <div class="ctx-item" data-act="species" data-species="cat">🐈 猫</div>
+            <div class="ctx-item" data-act="species" data-species="pig">🐷 猪</div>
+            <div class="ctx-item" data-act="species" data-species="bear">🐻 熊</div>
+          </div>
+        </div>
+
+        <div class="ctx-item has-sub">
+          <span class="sub-label">🎨 毛色</span>
+          <span class="sub-arrow">▸</span>
+          <div class="ctx-submenu">
+            <div class="ctx-item color-cat" data-color="orange">🟠 橘猫</div>
+            <div class="ctx-item color-cat" data-color="calico">🐱 三花</div>
+            <div class="ctx-item color-cat" data-color="cow">🐮 奶牛</div>
+            <div class="ctx-item color-cat" data-color="tabby">🩶 灰虎斑</div>
+            <div class="ctx-item color-cat" data-color="tuxedo">🎩 黑白</div>
+            <div class="ctx-item color-pig"  data-color="pink">🌸 粉猪</div>
+            <div class="ctx-item color-pig"  data-color="cream">🥛 奶白猪</div>
+            <div class="ctx-item color-bear" data-color="brown">🟫 棕熊</div>
+            <div class="ctx-item color-bear" data-color="black">⬛ 黑熊</div>
+            <div class="ctx-item color-bear" data-color="polar">⬜ 北极熊</div>
+          </div>
+        </div>
+
+        <div class="ctx-item has-sub">
+          <span class="sub-label">🎮 互动</span>
+          <span class="sub-arrow">▸</span>
+          <div class="ctx-submenu">
+            <div class="ctx-item" data-act="feed">🍴 投食</div>
+            <div class="ctx-item" data-act="sleep">💤 让她睡一下</div>
+            <div class="ctx-item" data-act="go-home">🏠 回窝睡觉</div>
+            <div class="ctx-item" data-act="photo">📸 拍照模式</div>
+          </div>
+        </div>
+
+        <div class="ctx-item has-sub">
+          <span class="sub-label">🧸 玩具</span>
+          <span class="sub-arrow">▸</span>
+          <div class="ctx-submenu">
+            <div class="ctx-item" data-act="toy" data-toy="yarn">🧶 毛线球</div>
+            <div class="ctx-item" data-act="toy" data-toy="ball">⚽ 弹力球</div>
+            <div class="ctx-item" data-act="toy" data-toy="paper">📄 纸团</div>
+            <div class="ctx-item" data-act="toy" data-toy="mouse">🐭 假老鼠</div>
+            <div class="ctx-item" data-act="toy" data-toy="laser">🔴 激光笔</div>
+            <div class="ctx-item" data-act="toy" data-toy="wand">🪶 逗猫棒</div>
+            <div class="ctx-item" data-act="toy-cancel">❌ 收起玩具</div>
+          </div>
+        </div>
+
         <div class="ctx-sep"></div>
         <div class="ctx-item ctx-danger" data-act="quit">退出</div>
       </div>

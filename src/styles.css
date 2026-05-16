@@ -88,6 +88,22 @@ html, body {
 #cat[data-species="bear"] #whisker-l,
 #cat[data-species="bear"] #whisker-r { display: none; }
 
+/* Top-down sleeping pose: shown only when cat is in bed */
+#bed-body {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  animation: breathe-pose 3.4s ease-in-out infinite;
+  transform-origin: 60px 70px;
+}
+#bed-body.hidden { display: none; }
+#bed-body svg { width: 100%; height: 100%; overflow: visible; }
+@keyframes breathe-pose {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.025); }
+}
+/* bed-body / in-bed-pose disabled — sleeping uses the regular cat-body */
+
 /* Color palettes (CSS variables) */
 #cat[data-color="orange"] {
   --body: #F4A56B;
@@ -380,6 +396,37 @@ html, body {
   margin: 4px 0;
 }
 
+/* Submenu (parent rows that expand on hover) */
+.ctx-item.has-sub {
+  position: relative;
+}
+.has-sub .sub-label { flex: 1; }
+.has-sub .sub-arrow { color: #B89070; font-weight: 700; margin-left: 6px; }
+.ctx-submenu {
+  display: none;
+  position: absolute;
+  top: -6px;
+  left: 100%;
+  min-width: 160px;
+  background: rgba(255, 252, 248, 0.98);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(80, 40, 0, 0.18), 0 1px 0 rgba(255,255,255,0.6) inset;
+  padding: 5px 0;
+  z-index: 101;
+  padding-left: 6px;        /* visual gap from the parent without breaking hover */
+}
+.ctx-item.has-sub:hover > .ctx-submenu {
+  display: block;
+}
+.ctx-submenu .ctx-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 14px;
+}
+
 /* Cute status panel at top of context menu */
 .ctx-info {
   padding: 12px 14px 10px;
@@ -500,9 +547,9 @@ html, body {
 }
 #feed-emoji.hidden { display: none; }
 @keyframes feed-spawn {
-  0% { transform: scale(0) translateY(-30px); }
-  60% { transform: scale(1.25) translateY(0); }
-  100% { transform: scale(1); }
+  0%   { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+  60%  { transform: translate(-50%, -50%) scale(1.20); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
 }
 
 /* ===== Photo flash overlay ===== */

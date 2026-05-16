@@ -415,6 +415,75 @@ const particlesEl = document.getElementById("particles");
 
 bodyEl.innerHTML = CAT_SVG;
 
+// Top-down sleeping pose — shows when the cat is curled up in its bed.
+const BED_BODY_SVG = `
+<svg viewBox="0 0 120 110" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
+  <ellipse cx="60" cy="104" rx="40" ry="3" fill="rgba(0,0,0,0.18)"/>
+  <!-- tail trailing out behind -->
+  <path d="M 38 86 Q 16 92, 10 78 Q 8 70, 18 70" stroke="var(--body)" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <!-- body (oval behind head, foreshortened) -->
+  <ellipse cx="60" cy="78" rx="32" ry="16" fill="var(--body)"/>
+  <ellipse cx="60" cy="80" rx="22" ry="7" fill="var(--belly)" opacity="0.5"/>
+  <!-- head — large circle pushed toward viewer -->
+  <circle cx="60" cy="50" r="30" fill="var(--body)"/>
+
+  <!-- species-specific ears -->
+  <g class="species-cat">
+    <path d="M 32 42 Q 30 26, 44 28 Q 54 34, 50 44 Q 42 46, 32 42 Z" fill="var(--body)"/>
+    <path d="M 38 38 Q 38 32, 44 34 Q 47 38, 44 41 Q 40 41, 38 38 Z" fill="var(--inner-ear)" opacity="0.85"/>
+    <path d="M 88 42 Q 90 26, 76 28 Q 66 34, 70 44 Q 78 46, 88 42 Z" fill="var(--body)"/>
+    <path d="M 82 38 Q 82 32, 76 34 Q 73 38, 76 41 Q 80 41, 82 38 Z" fill="var(--inner-ear)" opacity="0.85"/>
+  </g>
+  <g class="species-pig">
+    <path d="M 34 36 Q 30 50, 46 50 Q 54 42, 48 28 Q 38 28, 34 36 Z" fill="var(--body-dark)"/>
+    <path d="M 38 38 Q 38 46, 44 45 Q 47 41, 42 36 Z" fill="var(--inner-ear)" opacity="0.7"/>
+    <path d="M 86 36 Q 90 50, 74 50 Q 66 42, 72 28 Q 82 28, 86 36 Z" fill="var(--body-dark)"/>
+    <path d="M 82 38 Q 82 46, 76 45 Q 73 41, 78 36 Z" fill="var(--inner-ear)" opacity="0.7"/>
+  </g>
+  <g class="species-bear">
+    <circle cx="36" cy="34" r="11" fill="var(--body)"/>
+    <circle cx="36" cy="36" r="5.5" fill="var(--inner-ear)"/>
+    <circle cx="84" cy="34" r="11" fill="var(--body)"/>
+    <circle cx="84" cy="36" r="5.5" fill="var(--inner-ear)"/>
+  </g>
+
+  <!-- closed eyes (happy arcs) -->
+  <path d="M 46 52 Q 51 47, 56 52" stroke="var(--eye)" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path d="M 64 52 Q 69 47, 74 52" stroke="var(--eye)" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+
+  <!-- nose / snout -->
+  <g class="species-cat">
+    <path d="M 57 60 L 63 60 L 60 63 Z" fill="var(--nose)"/>
+  </g>
+  <g class="species-pig">
+    <ellipse cx="60" cy="60" rx="10" ry="6" fill="var(--snout, #E89DAE)"/>
+    <ellipse cx="56" cy="60" rx="1.3" ry="2" fill="#2D1A0A"/>
+    <ellipse cx="64" cy="60" rx="1.3" ry="2" fill="#2D1A0A"/>
+  </g>
+  <g class="species-bear">
+    <ellipse cx="60" cy="60" rx="5" ry="3.5" fill="#1A1A1A"/>
+    <ellipse cx="58" cy="58.5" rx="1.4" ry="1" fill="#FFFFFF" opacity="0.45"/>
+  </g>
+
+  <!-- soft mouth -->
+  <path d="M 60 63 Q 56 67, 53 66" stroke="#3A2A20" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+  <path d="M 60 63 Q 64 67, 67 66" stroke="#3A2A20" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+
+  <!-- blush -->
+  <ellipse cx="42" cy="58" rx="3.6" ry="2.2" fill="var(--blush)" opacity="0.55"/>
+  <ellipse cx="78" cy="58" rx="3.6" ry="2.2" fill="var(--blush)" opacity="0.55"/>
+
+  <!-- cat-only whiskers -->
+  <g class="species-cat">
+    <path d="M 44 62 L 32 60" stroke="var(--whisker)" stroke-width="0.9" stroke-linecap="round" opacity="0.85"/>
+    <path d="M 44 64 L 32 66" stroke="var(--whisker)" stroke-width="0.9" stroke-linecap="round" opacity="0.85"/>
+    <path d="M 76 62 L 88 60" stroke="var(--whisker)" stroke-width="0.9" stroke-linecap="round" opacity="0.85"/>
+    <path d="M 76 64 L 88 66" stroke="var(--whisker)" stroke-width="0.9" stroke-linecap="round" opacity="0.85"/>
+  </g>
+</svg>`;
+const bedBodyEl = document.getElementById("bed-body");
+bedBodyEl.innerHTML = BED_BODY_SVG;
+
 const head = document.getElementById("head");
 const tail = document.getElementById("tail");
 const legFL = document.getElementById("leg-fl");
@@ -2128,16 +2197,14 @@ function tick(now) {
     eyeScaleY = 1.12;
     legFLY = 0; legFRY = 0;
   } else if (state.mode === "in_bed") {
-    // tipped forward in 3D (rotateX) so head/ears face the viewer
+    // standing pose, eyes closed, gentle breathing — no tilt, no scale change
     bodyTilt = 0;
-    bodyScaleY = 1.0;
-    bodyScaleX = 1.0;
-    bodyBob = Math.sin(now / 1100) * 0.5;
-    tailSwing = -34;
-    legFLY = 1; legFRY = 1;
+    bodyScaleX = 1; bodyScaleY = 1;
+    bodyBob = Math.sin(now / 1100) * 1.2;
+    legFLY = 0; legFRY = 0;
+    tailSwing = -10 + Math.sin(now / 1900) * 4;
     eyeScaleY = 0.05;
-    mouthScaleY = 1;
-    mouthOpenOpacity = 0;
+    mouthScaleY = 1; mouthOpenOpacity = 0;
   } else if (state.mode === "going_home") {
     // sleepy, drooping
     eyeScaleY = 0.5;
@@ -2365,15 +2432,12 @@ function tick(now) {
     pupilTarget = 0.9;
   }
   lerpDisp("pupilScale", pupilTarget, dt, 220);
-  // 3D pitch: only the in-bed pose tips the cat forward (negative = top tilts toward viewer)
-  const rotateXTarget = state.mode === "in_bed" ? -72 : 0;
-  lerpDisp("rotateX", rotateXTarget, dt, 110);
+  // (top-down sleeping pose disabled — sleeping keeps the normal cat-body)
   const D = state.disp;
 
   // ----- apply transforms (using smoothed values) -----
   const finalScaleX = state.facingActual * D.bodyScaleX;
-  const rxStr = Math.abs(D.rotateX) > 0.1 ? ` rotateX(${D.rotateX}deg)` : "";
-  bodyEl.style.transform = `translateY(${D.bodyBob}px) rotate(${D.bodyTilt}deg)${rxStr} scale(${finalScaleX}, ${D.bodyScaleY})`;
+  bodyEl.style.transform = `translateY(${D.bodyBob}px) rotate(${D.bodyTilt}deg) scale(${finalScaleX}, ${D.bodyScaleY})`;
   tail.style.transform = `rotate(${D.tailSwing}deg)`;
   if (swatPawWhich === "fl") {
     legFL.style.transform = `translate(${swatPawShiftX}px, ${D.legFLY + swatPawShiftY}px)`;
