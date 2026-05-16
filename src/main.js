@@ -1258,8 +1258,11 @@ function tick(now) {
   }
   state.cursorMoveAmt = amt;
 
-  // ---- periodic blink ----
-  if (now - lastBlink > rand(2800, 5200) && state.mode !== "trick") {
+  // ---- periodic blink (skip when eyes are already closed) ----
+  if (now - lastBlink > rand(2800, 5200)
+      && state.mode !== "trick"
+      && state.mode !== "sleeping"
+      && state.mode !== "in_bed") {
     triggerBlink();
     lastBlink = now;
   }
@@ -2201,13 +2204,13 @@ function tick(now) {
     eyeScaleY = 1.12;
     legFLY = 0; legFRY = 0;
   } else if (state.mode === "in_bed") {
-    // standing pose, eyes closed, gentle breathing — no tilt, no scale change
+    // standing pose, eyes closed via "happy" arc face, gentle breathing
     bodyTilt = 0;
     bodyScaleX = 1; bodyScaleY = 1;
     bodyBob = Math.sin(now / 1100) * 1.2;
     legFLY = 0; legFRY = 0;
     tailSwing = -10 + Math.sin(now / 1900) * 4;
-    eyeScaleY = 0.05;
+    eyeScaleY = 1;             // closed shape is already the happy arc — don't compress further
     mouthScaleY = 1; mouthOpenOpacity = 0;
   } else if (state.mode === "going_home") {
     // sleepy, drooping
@@ -2379,7 +2382,9 @@ function tick(now) {
   const exDir = state.cursor.x - eyeCx;
   const eyDir = state.cursor.y - eyeCy;
   const ed = Math.hypot(exDir, eyDir);
-  if (cursorAlive && ed > 1 && !state.stareLocked) {
+  // closed-eye modes never track the cursor
+  const eyesClosed = state.mode === "sleeping" || state.mode === "in_bed";
+  if (cursorAlive && ed > 1 && !state.stareLocked && !eyesClosed) {
     const intensity = state.mode === "watching" ? 1.25 : 0.9;
     const fx = clamp((exDir / ed) * 2.6 * intensity, -2.6, 2.6);
     const fy = clamp((eyDir / ed) * 1.9 * intensity, -1.9, 1.9);
