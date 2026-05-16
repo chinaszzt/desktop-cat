@@ -368,7 +368,7 @@ const state = {
     tailSwing: 0, legFLY: 0, legFRY: 0,
     eyeScaleY: 1, eyeShiftX: 0, eyeShiftY: 0,
     mouthScaleY: 1, mouthOpenOpacity: 0,
-    pupilScale: 1,
+    pupilScale: 1, rotateX: 0,
   },
   modeUntil: 0,
   // gait: walk | run  (only meaningful in walking / interested)
@@ -792,10 +792,10 @@ function spawnFeed(now) {
   feedEl.style.top  = fy + "px";
   feedEl.classList.remove("hidden");
   feedEl.style.animation = "none"; void feedEl.offsetWidth; feedEl.style.animation = "";
-  // cat target so its mouth (state.x+60, state.y+73) reaches the food center
+  // cat target so its mouth touches the food edge (not the center) — keeps food unobscured
   state.mode = "feeding";
   state.modeStartT = now;
-  state.targetX = fx - 60;
+  state.targetX = fx - dir * 24 - 60;   // mouth at food rim
   state.targetY = fy - 73;
   state.modeUntil = now + 12000;
   state.chase = null; state.jump = null;
@@ -2128,13 +2128,13 @@ function tick(now) {
     eyeScaleY = 1.12;
     legFLY = 0; legFRY = 0;
   } else if (state.mode === "in_bed") {
-    // tipped forward like a cat collapsed into its bed — ears point toward viewer
-    bodyTilt = 80 * state.facing;
-    bodyScaleY = 0.82;
-    bodyScaleX = 1.04;
-    bodyBob = Math.sin(now / 1100) * 0.8;
-    tailSwing = -36;
-    legFLY = 3; legFRY = 3;
+    // tipped forward in 3D (rotateX) so head/ears face the viewer
+    bodyTilt = 0;
+    bodyScaleY = 1.0;
+    bodyScaleX = 1.0;
+    bodyBob = Math.sin(now / 1100) * 0.5;
+    tailSwing = -34;
+    legFLY = 1; legFRY = 1;
     eyeScaleY = 0.05;
     mouthScaleY = 1;
     mouthOpenOpacity = 0;
@@ -2365,11 +2365,15 @@ function tick(now) {
     pupilTarget = 0.9;
   }
   lerpDisp("pupilScale", pupilTarget, dt, 220);
+  // 3D pitch: only the in-bed pose tips the cat forward (negative = top tilts toward viewer)
+  const rotateXTarget = state.mode === "in_bed" ? -72 : 0;
+  lerpDisp("rotateX", rotateXTarget, dt, 110);
   const D = state.disp;
 
   // ----- apply transforms (using smoothed values) -----
   const finalScaleX = state.facingActual * D.bodyScaleX;
-  bodyEl.style.transform = `translateY(${D.bodyBob}px) rotate(${D.bodyTilt}deg) scale(${finalScaleX}, ${D.bodyScaleY})`;
+  const rxStr = Math.abs(D.rotateX) > 0.1 ? ` rotateX(${D.rotateX}deg)` : "";
+  bodyEl.style.transform = `translateY(${D.bodyBob}px) rotate(${D.bodyTilt}deg)${rxStr} scale(${finalScaleX}, ${D.bodyScaleY})`;
   tail.style.transform = `rotate(${D.tailSwing}deg)`;
   if (swatPawWhich === "fl") {
     legFL.style.transform = `translate(${swatPawShiftX}px, ${D.legFLY + swatPawShiftY}px)`;

@@ -53,6 +53,10 @@ html, body {
   filter: drop-shadow(0 6px 4px rgba(0, 0, 0, 0.18));
   will-change: transform, left, top;
   z-index: 5;
+  perspective: 550px;
+}
+#cat-body {
+  transform-origin: 60px 100px;
 }
 
 /* Body floats up/down while walking */
@@ -461,7 +465,7 @@ html, body {
   position: absolute;
   font-size: 38px;
   pointer-events: none;
-  z-index: 1;
+  z-index: 6;
   line-height: 1;
   filter: drop-shadow(0 4px 4px rgba(0,0,0,0.18));
   transform: translate(-50%, -50%);
@@ -487,7 +491,7 @@ html, body {
   position: absolute;
   font-size: 44px;
   pointer-events: none;
-  z-index: 1;
+  z-index: 6;
   line-height: 1;
   filter: drop-shadow(0 4px 4px rgba(0,0,0,0.18));
   animation: feed-spawn 0.45s cubic-bezier(.3,1.7,.6,1);
@@ -573,7 +577,7 @@ html, body {
   position: absolute;
   font-size: 32px;
   pointer-events: none;
-  z-index: 1;
+  z-index: 6;
   line-height: 1;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.18));
   transform: translate(-50%, -50%);
