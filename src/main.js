@@ -700,7 +700,7 @@ function setToyVisual(type) {
 // physics params per toy type
 const TOY_PHYS = {
   yarn:  { friction: 0.00065, gravity: 0.0010, bounce: 0.68, spin: true,  hits: 4 },
-  ball:  { friction: 0.00035, gravity: 0.0011, bounce: 0.82, spin: false, hits: 5 },
+  ball:  { friction: 0.00030, gravity: 0.0011, bounce: 0.92, spin: false, hits: 5 },
   paper: { friction: 0.00150, gravity: 0.0010, bounce: 0.38, spin: true,  hits: 3 },
 };
 
@@ -1430,10 +1430,13 @@ function tick(now) {
           t.swatT0 = 0;
 
           if (t.type === "yarn" || t.type === "ball" || t.type === "paper") {
-            // physics impulse — strong enough to actually fly across the screen
-            const power = t.type === "ball" ? 0.95 : t.type === "yarn" ? 0.72 : 0.50;
-            t.vx = state.facing * power + rand(-0.10, 0.10);
-            t.vy = -(0.35 + Math.random() * 0.25);   // pop up higher
+            // per-type impulse: balls go boing, paper barely moves
+            let pX, pY;
+            if (t.type === "ball") { pX = 0.85; pY = 0.65 + Math.random() * 0.25; }
+            else if (t.type === "yarn") { pX = 0.72; pY = 0.30 + Math.random() * 0.20; }
+            else /* paper */           { pX = 0.50; pY = 0.20 + Math.random() * 0.15; }
+            t.vx = state.facing * pX + rand(-0.10, 0.10);
+            t.vy = -pY;
             t.spinVel = rand(-0.9, 0.9);
             t.hits += 1;
           } else if (t.type === "mouse") {
