@@ -9,6 +9,29 @@
   </head>
   <body>
     <div id="stage">
+      <div id="bed" class="hidden" data-species="cat">
+        <svg viewBox="0 0 130 70" width="130" height="70" overflow="visible">
+          <ellipse cx="65" cy="62" rx="56" ry="6" fill="rgba(0,0,0,0.22)"/>
+          <ellipse cx="65" cy="42" rx="60" ry="22" fill="var(--bed-dark)"/>
+          <ellipse cx="65" cy="40" rx="46" ry="14" fill="var(--bed-light)"/>
+          <ellipse cx="58" cy="36" rx="22" ry="5" fill="var(--bed-shine)" opacity="0.65"/>
+          <!-- pig: straw whiskers across the rim -->
+          <g class="bed-deco bed-deco-pig">
+            <path d="M 18 36 L 8 30" stroke="#A87232" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M 18 40 L 6 38" stroke="#A87232" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M 112 36 L 122 30" stroke="#A87232" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M 112 40 L 124 38" stroke="#A87232" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M 65 24 L 60 16 M 65 24 L 70 16 M 65 24 L 65 14" stroke="#A87232" stroke-width="1.4" stroke-linecap="round"/>
+          </g>
+          <!-- bear: wood ring grain -->
+          <g class="bed-deco bed-deco-bear">
+            <ellipse cx="65" cy="40" rx="34" ry="9" stroke="#5E3B1A" stroke-width="0.8" fill="none" opacity="0.45"/>
+            <ellipse cx="65" cy="40" rx="22" ry="5.5" stroke="#5E3B1A" stroke-width="0.8" fill="none" opacity="0.45"/>
+          </g>
+          <!-- species decoration emoji at the rim corner -->
+          <text class="bed-deco-icon" x="98" y="36" font-size="18" text-anchor="middle"></text>
+        </svg>
+      </div>
       <div id="cat" data-species="cat" data-color="orange" data-facing="right" data-eyes="normal" data-mouth="normal">
         <div id="hat" class="hidden"></div>
         <div id="bubble" class="hidden"><span id="bubble-text">喵~</span></div>

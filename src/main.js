@@ -409,6 +409,7 @@ const toyEl = document.getElementById("toy");
 const feedEl = document.getElementById("feed-emoji");
 const flashEl = document.getElementById("flash");
 const birdEl = document.getElementById("bird");
+const bedEl = document.getElementById("bed");
 const laserTrailEl = document.getElementById("laser-trail");
 const particlesEl = document.getElementById("particles");
 
@@ -781,20 +782,21 @@ function spawnFeed(now) {
   if (state.mode === "in_bed") wakeFromBed(now);
   const food = SPECIES_FOOD[state.species] || SPECIES_FOOD.cat;
   const b = bounds();
-  const dir = state.facing;
-  const fx = clamp(state.x + (dir > 0 ? 120 : -120) + rand(-30, 30), b.minX + 10, b.maxX - 10);
-  const fy = clamp(state.y + rand(-10, 30), b.minY + 10, b.maxY - 10);
+  const dir = state.facing >= 0 ? 1 : -1;
+  // place emoji CENTER in front of the cat's mouth (cat-mouth is at svg (60, 73))
+  const fx = clamp(state.x + 60 + dir * 60 + rand(-12, 12), b.minX + 40, b.maxX - 40);
+  const fy = clamp(state.y + 73 + rand(-8, 8),               b.minY + 40, b.maxY - 40);
   state.feed = { x: fx, y: fy, eaten: false, t0: now, expireT: now + 25000 };
   feedEl.textContent = food.emoji;
-  feedEl.style.left = (fx + 30) + "px";
-  feedEl.style.top  = (fy + 30) + "px";
+  feedEl.style.left = fx + "px";
+  feedEl.style.top  = fy + "px";
   feedEl.classList.remove("hidden");
   feedEl.style.animation = "none"; void feedEl.offsetWidth; feedEl.style.animation = "";
-  // cat heads toward feed
+  // cat target so its mouth (state.x+60, state.y+73) reaches the food center
   state.mode = "feeding";
   state.modeStartT = now;
-  state.targetX = fx - CAT_W / 2 + 20;
-  state.targetY = fy - CAT_H / 2 + 30;
+  state.targetX = fx - 60;
+  state.targetY = fy - 73;
   state.modeUntil = now + 12000;
   state.chase = null; state.jump = null;
 }
@@ -2126,13 +2128,16 @@ function tick(now) {
     eyeScaleY = 1.12;
     legFLY = 0; legFRY = 0;
   } else if (state.mode === "in_bed") {
-    // curled-up loaf, eyes shut, slow breathing
+    // tipped forward like a cat collapsed into its bed — ears point toward viewer
+    bodyTilt = 80 * state.facing;
+    bodyScaleY = 0.82;
+    bodyScaleX = 1.04;
+    bodyBob = Math.sin(now / 1100) * 0.8;
+    tailSwing = -36;
+    legFLY = 3; legFRY = 3;
     eyeScaleY = 0.05;
-    bodyScaleY = 0.86;
-    bodyBob = Math.sin(now / 1100) * 1.2;
-    tailSwing = -28;
-    legFLY = 4; legFRY = 4;
-    mouthScaleY = 1; mouthOpenOpacity = 0;
+    mouthScaleY = 1;
+    mouthOpenOpacity = 0;
   } else if (state.mode === "going_home") {
     // sleepy, drooping
     eyeScaleY = 0.5;
@@ -2392,6 +2397,25 @@ function tick(now) {
   const wPhase = now / 700;
   whiskerL.style.transform = `rotate(${Math.sin(wPhase)       * wAmp}deg)`;
   whiskerR.style.transform = `rotate(${Math.sin(wPhase + 0.4) * wAmp}deg)`;
+
+  // ----- bed (visible during go-home / in-bed / dragging a bed-cat) -----
+  const draggingFromBed = state.mode === "dragged" && state.press && state.press.fromInBed;
+  const bedVisible = state.mode === "in_bed" || state.mode === "going_home" || draggingFromBed;
+  if (bedVisible) {
+    if (bedEl.dataset.species !== state.species) {
+      bedEl.dataset.species = state.species;
+      const decoIcon = bedEl.querySelector(".bed-deco-icon");
+      if (decoIcon) decoIcon.textContent = state.species === "pig" ? "🌾" : state.species === "bear" ? "🍯" : "💗";
+    }
+    // going_home: bed sits at home waiting; otherwise bed travels under the cat
+    const bx = (state.mode === "going_home") ? state.homeX : state.x;
+    const by = (state.mode === "going_home") ? state.homeY : state.y;
+    bedEl.style.left = (bx + CAT_W / 2) + "px";
+    bedEl.style.top  = (by + CAT_H - 18) + "px";
+    bedEl.classList.remove("hidden");
+  } else if (!bedEl.classList.contains("hidden")) {
+    bedEl.classList.add("hidden");
+  }
 
   // ----- passthrough hit-test -----
   const ctxOpen = !ctxMenuEl.classList.contains("hidden");

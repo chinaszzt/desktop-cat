@@ -18,6 +18,28 @@ html, body {
   pointer-events: none;
 }
 
+#bed {
+  position: absolute;
+  width: 130px;
+  height: 70px;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  transition: opacity 0.4s ease-out;
+  filter: drop-shadow(0 3px 4px rgba(80, 40, 0, 0.18));
+}
+#bed.hidden { display: none; }
+#bed svg { width: 100%; height: 100%; display: block; overflow: visible; }
+
+/* Bed palettes per species */
+#bed[data-species="cat"]  { --bed-dark: #E89BAE; --bed-light: #F8C5D0; --bed-shine: #FFE6EC; }
+#bed[data-species="pig"]  { --bed-dark: #C8A055; --bed-light: #ECCF87; --bed-shine: #FFF0BC; }
+#bed[data-species="bear"] { --bed-dark: #7A4F25; --bed-light: #AC7A48; --bed-shine: #D9B188; }
+
+.bed-deco { display: none; }
+#bed[data-species="pig"]  .bed-deco-pig  { display: inline; }
+#bed[data-species="bear"] .bed-deco-bear { display: inline; }
+
 /* ===== The cat ===== */
 #cat {
   position: absolute;
@@ -30,6 +52,7 @@ html, body {
   transform-origin: 60px 90px;
   filter: drop-shadow(0 6px 4px rgba(0, 0, 0, 0.18));
   will-change: transform, left, top;
+  z-index: 5;
 }
 
 /* Body floats up/down while walking */
@@ -468,6 +491,8 @@ html, body {
   line-height: 1;
   filter: drop-shadow(0 4px 4px rgba(0,0,0,0.18));
   animation: feed-spawn 0.45s cubic-bezier(.3,1.7,.6,1);
+  transform: translate(-50%, -50%);
+  transform-origin: center;
 }
 #feed-emoji.hidden { display: none; }
 @keyframes feed-spawn {
