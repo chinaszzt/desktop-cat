@@ -53,10 +53,12 @@ const CAT_SVG = `
 
   <ellipse cx="60" cy="86" rx="28" ry="11" fill="var(--belly)" opacity="0.55" class="belly-default"/>
 
-  <path d="M 30 40 Q 28 30, 40 30 Q 50 34, 48 42 Q 40 44, 30 40 Z" fill="var(--body)"/>
-  <path d="M 36 38 Q 36 33, 42 34 Q 45 38, 42 41 Q 38 41, 36 38 Z" fill="var(--inner-ear)" opacity="0.85"/>
-  <path d="M 90 40 Q 92 30, 80 30 Q 70 34, 72 42 Q 80 44, 90 40 Z" fill="var(--body)"/>
-  <path d="M 84 38 Q 84 33, 78 34 Q 75 38, 78 41 Q 82 41, 84 38 Z" fill="var(--inner-ear)" opacity="0.85"/>
+  <g id="cat-ears">
+    <path d="M 30 40 Q 28 30, 40 30 Q 50 34, 48 42 Q 40 44, 30 40 Z" fill="var(--body)"/>
+    <path d="M 36 38 Q 36 33, 42 34 Q 45 38, 42 41 Q 38 41, 36 38 Z" fill="var(--inner-ear)" opacity="0.85"/>
+    <path d="M 90 40 Q 92 30, 80 30 Q 70 34, 72 42 Q 80 44, 90 40 Z" fill="var(--body)"/>
+    <path d="M 84 38 Q 84 33, 78 34 Q 75 38, 78 41 Q 82 41, 84 38 Z" fill="var(--inner-ear)" opacity="0.85"/>
+  </g>
 
   <ellipse cx="60" cy="74" rx="18" ry="10" fill="var(--belly)" opacity="0.55"/>
 
@@ -127,7 +129,7 @@ const CAT_SVG = `
     </g>
   </g>
 
-  <path d="M 57 70 L 63 70 L 60 73 Z" fill="var(--nose)"/>
+  <path id="cat-nose" d="M 57 70 L 63 70 L 60 73 Z" fill="var(--nose)"/>
 
   <g id="mouth" style="transform-origin: 60px 75px;">
     <g class="mouth-style mouth-normal">
@@ -172,27 +174,87 @@ const CAT_SVG = `
   <g id="leg-fr" style="transform-origin: 82px 95px;">
     <ellipse cx="82" cy="98" rx="9" ry="5" fill="var(--body-dark)"/>
   </g>
+
+  <!-- pig parts: drooping ears, big snout, curly tail -->
+  <g class="species-pig">
+    <path d="M 24 80 Q 16 78, 14 82 Q 14 86, 20 86 Q 24 84, 20 80" stroke="var(--body-dark)" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M 32 38 Q 28 50, 42 50 Q 50 42, 44 30 Q 36 30, 32 38 Z" fill="var(--body-dark)"/>
+    <path d="M 36 40 Q 36 46, 41 45 Q 43 41, 39 37 Z" fill="var(--inner-ear)" opacity="0.7"/>
+    <path d="M 88 38 Q 92 50, 78 50 Q 70 42, 76 30 Q 84 30, 88 38 Z" fill="var(--body-dark)"/>
+    <path d="M 84 40 Q 84 46, 79 45 Q 77 41, 81 37 Z" fill="var(--inner-ear)" opacity="0.7"/>
+    <ellipse cx="60" cy="69" rx="11" ry="7" fill="var(--snout, #E89DAE)"/>
+    <ellipse cx="55" cy="69" rx="1.4" ry="2.2" fill="#2D1A0A"/>
+    <ellipse cx="65" cy="69" rx="1.4" ry="2.2" fill="#2D1A0A"/>
+  </g>
+
+  <!-- bear parts: round ears, big black nose, tiny round tail -->
+  <g class="species-bear">
+    <ellipse cx="22" cy="78" rx="6" ry="5" fill="var(--body)"/>
+    <circle cx="38" cy="32" r="9" fill="var(--body)"/>
+    <circle cx="82" cy="32" r="9" fill="var(--body)"/>
+    <circle cx="38" cy="33" r="4.5" fill="var(--inner-ear)"/>
+    <circle cx="82" cy="33" r="4.5" fill="var(--inner-ear)"/>
+    <ellipse cx="60" cy="69" rx="5.5" ry="4" fill="#1A1A1A"/>
+    <ellipse cx="58" cy="67" rx="1.5" ry="1" fill="#FFFFFF" opacity="0.55"/>
+  </g>
 </svg>`;
 
 // ===== State =====
-const COLORS = ["orange", "calico", "cow", "tabby", "tuxedo"];
-const MEOWS = ["喵~", "喵喵~", "喵呜~", "咕噜咕噜..."];
-const MEOW_BY_MOOD = {
-  happy:    ["喵~", "喵♪", "咕噜咕噜~", "喵呼~", "喵♡"],
-  excited:  ["喵!", "喵喵!", "嗷呜!", "喵呜!", "喵—!"],
-  curious:  ["喵?", "嗯?", "...?", "喵嗯?", "唔?"],
-  sleepy:   ["唔...", "喵...", "...zzz", "嗯......"],
-  grumpy:   ["嘶!", "哼!", "fff...", "走开!"],
-  shy:      ["...", "唔...", "(///)", "嗯?"],
+const SPECIES_COLORS = {
+  cat:  ["orange", "calico", "cow", "tabby", "tuxedo"],
+  pig:  ["pink", "cream"],
+  bear: ["brown", "black", "polar"],
+};
+const SPECIES_DEFAULT_COLOR = { cat: "orange", pig: "pink", bear: "brown" };
+const ALL_SPECIES = ["cat", "pig", "bear"];
+const SPECIES_FOOD = {
+  cat:  { emoji: "🐟", eatBubble: "好饱~ 喵呜!",  moodGain: 15, heartParticles: 0 },
+  pig:  { emoji: "🥕", eatBubble: "哼噜~ 好吃!", moodGain: 20, heartParticles: 1 },
+  bear: { emoji: "🍯", eatBubble: "嗯~ 好甜~♡", moodGain: 28, heartParticles: 4 },
+};
+// pigs and bears amble slower than cats
+const SPECIES_SPEED = { cat: 1.0, pig: 0.78, bear: 0.72 };
+function speciesSpeed() { return SPECIES_SPEED[state.species] || 1; }
+const COLORS = [...SPECIES_COLORS.cat, ...SPECIES_COLORS.pig, ...SPECIES_COLORS.bear];
+const SPECIES_SOUNDS = {
+  cat: {
+    happy:   ["喵~", "喵♪", "咕噜咕噜~", "喵呼~", "喵♡"],
+    excited: ["喵!", "喵喵!", "嗷呜!", "喵呜!", "喵—!"],
+    curious: ["喵?", "嗯?", "...?", "喵嗯?", "唔?"],
+    sleepy:  ["唔...", "喵...", "...zzz", "嗯......"],
+    grumpy:  ["嘶!", "哼!", "fff...", "走开!"],
+    shy:     ["...", "唔...", "(///)", "嗯?"],
+    neutral: ["喵~", "喵喵~", "喵呜~", "咕噜咕噜..."],
+  },
+  pig: {
+    happy:   ["哼噜~", "呼噜~", "嘿嘿~", "哼♪"],
+    excited: ["哼!", "嘿嘿!", "嗯哼!"],
+    curious: ["哼?", "嗯?", "...?"],
+    sleepy:  ["呼...", "哼...", "..."],
+    grumpy:  ["哼!", "呼噜!", "走开!"],
+    shy:     ["...", "唔...", "(///)"],
+    neutral: ["哼噜~", "呼~", "嘿~"],
+  },
+  bear: {
+    happy:   ["嗷呜~", "嗯~", "呼噜~", "唔~"],
+    excited: ["嗷!", "吼!", "呜啊!"],
+    curious: ["嗷?", "嗯?", "...?"],
+    sleepy:  ["呼...", "嗯...", "ZZ..."],
+    grumpy:  ["吼!", "呼!", "嗷!"],
+    shy:     ["...", "唔...", "嗯..."],
+    neutral: ["嗷~", "嗯~", "呼~"],
+  },
 };
 function pickMeowByMood(now) {
-  if (state.mode === "sleeping" || state.sleepiness > 75) return pick(MEOW_BY_MOOD.sleepy);
-  if (state.mood < 30) return pick(MEOW_BY_MOOD.grumpy);
-  if (state.cursorMoveAmt > 220) return pick(MEOW_BY_MOOD.excited);
-  if (now - state.lastSigMoveT > 30000) return pick(MEOW_BY_MOOD.curious);
-  if (state.mood > 70) return pick(MEOW_BY_MOOD.happy);
-  return pick(MEOWS);
+  const pool = SPECIES_SOUNDS[state.species] || SPECIES_SOUNDS.cat;
+  if (state.mode === "sleeping" || state.sleepiness > 75) return pick(pool.sleepy);
+  if (state.mood < 30) return pick(pool.grumpy);
+  if (state.cursorMoveAmt > 220) return pick(pool.excited);
+  if (now - state.lastSigMoveT > 30000) return pick(pool.curious);
+  if (state.mood > 70) return pick(pool.happy);
+  return pick(pool.neutral);
 }
+const MEOWS = SPECIES_SOUNDS.cat.neutral;  // legacy alias used in a couple spots
 const HEARTS = ["❤", "❤❤", "♡", "(´• ω •`)♡"];
 const SLEEPY = ["zzz...", "Zzz", "💤"];
 
@@ -249,6 +311,9 @@ const state = {
   lastBirdT: 0,
   // mood 0..100 (50 is neutral)
   mood: 50,
+  species: "cat",
+  // "home" — corner spot where the cat curls up to stay out of the way
+  homeX: 0, homeY: 0,
   // smoothed display values (1st-order low-pass per frame) — kills mode-switch pops
   disp: {
     bodyTilt: 0, bodyScaleX: 1, bodyScaleY: 1, bodyBob: 0,
@@ -440,6 +505,8 @@ function selectFace(now) {
   else if (state.mode === "photo")    { eyes = "stars";  mouth = "smile"; }
   else if (state.mode === "startled") { eyes = "wide"; }
   else if (state.mode === "bird_watch") { eyes = "wide"; mouth = "pursed"; }
+  else if (state.mode === "in_bed")     { eyes = "happy"; }
+  else if (state.mode === "going_home") { eyes = "happy"; }
   else if (state.mode === "chasing")  { eyes = "wide"; }
   else if (state.mode === "trick") {
     switch (state.trickAction) {
@@ -641,14 +708,36 @@ function wakeUp(now) {
   triggerBlink();
 }
 
+function goHome(now) {
+  state.mode = "going_home";
+  state.modeStartT = now;
+  state.targetX = state.homeX;
+  state.targetY = state.homeY;
+  state.modeUntil = now + 30000;        // safety
+  state.chase = null;
+  state.jump = null;
+  if (state.toy) cancelToy(now);
+}
+
+function wakeFromBed(now) {
+  state.mode = "walking";
+  pickNewTarget();
+  startWalkLeg(now, false);
+  showBubble("?", 800);
+  triggerBlink();
+}
+
 function spawnFeed(now) {
   if (state.feed) return;
   if (state.mode === "sleeping") wakeUp(now);
+  if (state.mode === "in_bed") wakeFromBed(now);
+  const food = SPECIES_FOOD[state.species] || SPECIES_FOOD.cat;
   const b = bounds();
   const dir = state.facing;
   const fx = clamp(state.x + (dir > 0 ? 120 : -120) + rand(-30, 30), b.minX + 10, b.maxX - 10);
   const fy = clamp(state.y + rand(-10, 30), b.minY + 10, b.maxY - 10);
   state.feed = { x: fx, y: fy, eaten: false, t0: now, expireT: now + 25000 };
+  feedEl.textContent = food.emoji;
   feedEl.style.left = (fx + 30) + "px";
   feedEl.style.top  = (fy + 30) + "px";
   feedEl.classList.remove("hidden");
@@ -811,6 +900,11 @@ function spawnToy(now, type) {
     toyEl.style.opacity = "1";
     setTimeout(() => { toyEl.style.transition = ""; }, 320);
   });
+
+  // pigs and bears don't chase the wand — leave the toy out but stay un-engaged
+  if (type === "wand" && state.species !== "cat") {
+    return;
+  }
 
   state.mode = "playing";
   state.modeStartT = now;
@@ -1018,6 +1112,9 @@ function tick(now) {
       showBubble("睡饱啦~", 1500);
       triggerTailWag(now, 28, 6, 1200);
     }
+  } else if (state.mode === "in_bed") {
+    // in bed: rest but never auto-wake (only click / drag dismisses)
+    state.sleepiness = Math.max(0, state.sleepiness - dt / 1000 * 2.0);
   } else {
     // accumulate while awake; faster when idle; ×2 at night (22:00–06:00)
     let rate = state.mode === "idle" ? 0.55 : 0.32;
@@ -1227,7 +1324,7 @@ function tick(now) {
   const lockedModes = new Set([
     "trick", "sleeping", "pet", "dragged", "dizzy",
     "feeding", "playing", "clingy", "scratching", "photo", "startled",
-    "bird_watch",
+    "bird_watch", "in_bed", "going_home",
   ]);
   if (!lockedModes.has(state.mode)) {
     if (cursorAlive && cursorActive && cdist < 280 && state.mode !== "interested") {
@@ -1291,7 +1388,7 @@ function tick(now) {
         const remaining = tdist / baseDist;
         const easing = 0.4 + 0.6 * smoothstep(1 - Math.abs(remaining - 0.5) * 2); // peak at mid
         const zoomBoost = state.zoom ? 1.45 : 1.0;
-        const sp = (state.gait === "run" ? BASE_SPEED_RUN : BASE_SPEED_WALK) * easing * zoomBoost;
+        const sp = (state.gait === "run" ? BASE_SPEED_RUN : BASE_SPEED_WALK) * easing * zoomBoost * speciesSpeed();
         state.x += (tdx / tdist) * sp * dt;
         state.y += (tdy / tdist) * sp * dt;
         moving = true;
@@ -1371,14 +1468,21 @@ function tick(now) {
         if (now - state.feed.eatT0 > 1500) {
           feedEl.classList.add("hidden");
           state.feed = null;
+          const food = SPECIES_FOOD[state.species] || SPECIES_FOOD.cat;
           state.sleepiness = Math.max(0, state.sleepiness - 25);
-          bumpMood(15);
+          bumpMood(food.moodGain);
           triggerTailWag(now, 30, 7, 1800);
-          showBubble("好饱~ 喵呜!", 1500);
+          showBubble(food.eatBubble, 1500);
+          // burst hearts for bears (honey love)
+          const headX = state.x + CAT_W / 2;
+          const headY = state.y + 30;
+          for (let i = 0; i < food.heartParticles; i++) {
+            setTimeout(() => spawnHeart(headX + rand(-18, 18), headY), i * 120);
+          }
           state.mode = "walking"; pickNewTarget(); startWalkLeg(now, false);
         }
       } else {
-        const sp = BASE_SPEED_RUN;
+        const sp = BASE_SPEED_RUN * speciesSpeed();
         state.x += (tdx / tdist) * sp * dt;
         state.y += (tdy / tdist) * sp * dt;
         moving = true; moveDx = tdx;
@@ -1417,7 +1521,7 @@ function tick(now) {
             }
           }
         } else {
-          const sp = BASE_SPEED_RUN * (isLaser ? 1.45 : 1.10);
+          const sp = BASE_SPEED_RUN * (isLaser ? 1.45 : 1.10) * speciesSpeed();
           state.x += (tdx / tdist) * sp * dt;
           state.y += (tdy / tdist) * sp * dt;
           moving = true; moveDx = tdx;
@@ -1464,9 +1568,9 @@ function tick(now) {
         }
       } else {
         // chase toy
-        const sp = (t.type === "laser" || t.type === "wand")
+        const sp = ((t.type === "laser" || t.type === "wand")
           ? BASE_SPEED_RUN * 1.2
-          : BASE_SPEED_RUN;
+          : BASE_SPEED_RUN) * speciesSpeed();
         if (tdist > 4) {
           state.x += (tdx / tdist) * sp * dt;
           state.y += (tdy / tdist) * sp * dt;
@@ -1482,7 +1586,7 @@ function tick(now) {
       const tdy = state.targetY - state.y;
       const tdist = Math.hypot(tdx, tdy);
       if (tdist > 8 && now < state.modeUntil - 5000) {
-        const sp = BASE_SPEED_WALK * 1.1;
+        const sp = BASE_SPEED_WALK * 1.1 * speciesSpeed();
         state.x += (tdx / tdist) * sp * dt;
         state.y += (tdy / tdist) * sp * dt;
         moving = true; moveDx = tdx;
@@ -1517,6 +1621,23 @@ function tick(now) {
       if (bdx >  FACING_DEADZONE) state.facing = 1;
       else if (bdx < -FACING_DEADZONE) state.facing = -1;
     }
+  } else if (state.mode === "going_home") {
+    const tdx = state.homeX - state.x;
+    const tdy = state.homeY - state.y;
+    const tdist = Math.hypot(tdx, tdy);
+    if (tdist < 6 || now > state.modeUntil) {
+      state.x = state.homeX;
+      state.y = state.homeY;
+      state.mode = "in_bed";
+      state.modeStartT = now;
+    } else {
+      const sp = BASE_SPEED_WALK * speciesSpeed();
+      state.x += (tdx / tdist) * sp * dt;
+      state.y += (tdy / tdist) * sp * dt;
+      moving = true; moveDx = tdx;
+    }
+  } else if (state.mode === "in_bed") {
+    // bed-cat — no spontaneous transitions; click + drag handlers manage exit
   } else if (state.mode === "interested") {
     // not a straight chase — orbit/drift toward cursor area
     const desiredDist = 110;  // hover roughly 110px from cursor
@@ -1529,7 +1650,7 @@ function tick(now) {
     const dy = ty - state.y;
     const d = Math.hypot(dx, dy);
     if (d > 10) {
-      const sp = BASE_SPEED_WALK * 1.1;
+      const sp = BASE_SPEED_WALK * 1.1 * speciesSpeed();
       state.x += (dx / d) * sp * dt;
       state.y += (dy / d) * sp * dt;
       moving = true;
@@ -1620,7 +1741,7 @@ function tick(now) {
       }
     } else if (state.trickAction === "pounce" || state.trickAction === "happy_jump") {
       // small forward burst during pounce
-      const sp = BASE_SPEED_RUN * 0.7 * state.facing;
+      const sp = BASE_SPEED_RUN * 0.7 * speciesSpeed() * state.facing;
       state.x += sp * dt;
       moving = true;
       moveDx = state.facing;
@@ -1956,6 +2077,19 @@ function tick(now) {
     tailSwing = Math.sin(now / 220) * 18;
     eyeScaleY = 1.12;
     legFLY = 0; legFRY = 0;
+  } else if (state.mode === "in_bed") {
+    // curled-up loaf, eyes shut, slow breathing
+    eyeScaleY = 0.05;
+    bodyScaleY = 0.86;
+    bodyBob = Math.sin(now / 1100) * 1.2;
+    tailSwing = -28;
+    legFLY = 4; legFRY = 4;
+    mouthScaleY = 1; mouthOpenOpacity = 0;
+  } else if (state.mode === "going_home") {
+    // sleepy, drooping
+    eyeScaleY = 0.5;
+    bodyTilt = 2 * state.facing;
+    tailSwing = Math.sin(now / 700) * 6;
   } else if (state.mode === "photo") {
     const t = (now - state.modeStartT) / 1500;
     bodyBob = 0; bodyTilt = 0;
@@ -2242,6 +2376,9 @@ window.addEventListener("DOMContentLoaded", () => {
   // default starting position
   state.x = window.innerWidth * 0.5 - CAT_W / 2;
   state.y = window.innerHeight * 0.6;
+  // default "home" — bottom-right corner, out of the way
+  state.homeX = window.innerWidth - CAT_W - 80;
+  state.homeY = window.innerHeight - CAT_H - 80;
   pickNewTarget();
   applyHoliday();
 
@@ -2252,7 +2389,11 @@ window.addEventListener("DOMContentLoaded", () => {
       wakeUp(now);
       return;
     }
-    state.press = { t0: now, x: e.clientX, y: e.clientY, drag: false, pet: false };
+    state.press = {
+      t0: now, x: e.clientX, y: e.clientY,
+      drag: false, pet: false,
+      fromInBed: state.mode === "in_bed",
+    };
   });
 
   document.addEventListener("mousemove", (e) => {
@@ -2279,12 +2420,19 @@ window.addEventListener("DOMContentLoaded", () => {
     const press = state.press; state.press = null;
     const now = performance.now();
     if (press.drag) {
-      // released after dragging → dizzy reaction
-      state.mode = "dizzy";
-      state.modeStartT = now;
-      state.modeUntil = now + 900;
-      showBubble("(°ロ°)", 800);
-      bumpMood(-8);
+      if (press.fromInBed) {
+        // moved bed-bound cat → bed moves with her, stays asleep
+        state.homeX = state.x;
+        state.homeY = state.y;
+        state.mode = "in_bed";
+      } else {
+        // released after dragging → dizzy reaction
+        state.mode = "dizzy";
+        state.modeStartT = now;
+        state.modeUntil = now + 900;
+        showBubble("(°ロ°)", 800);
+        bumpMood(-8);
+      }
     } else if (press.pet) {
       // end pet
       state.mode = "walking";
@@ -2293,6 +2441,9 @@ window.addEventListener("DOMContentLoaded", () => {
       bubbleEl.classList.add("hidden");
       triggerTailWag(now, 26, 5, 1000);
       bumpMood(12);
+    } else if (press.fromInBed) {
+      // short tap on bed-cat → wake her up
+      wakeFromBed(now);
     } else {
       // short click → trick
       // mood-weighted pick — low mood gets more grumpy/shy, high mood gets more heart/jump
@@ -2322,12 +2473,26 @@ window.addEventListener("DOMContentLoaded", () => {
 
   catEl.addEventListener("dblclick", (e) => {
     if (e.button !== 0) return;
-    if (state.mode === "sleeping" || state.mode === "feeding") return;
+    if (state.mode === "sleeping" || state.mode === "feeding"
+        || state.mode === "in_bed" || state.mode === "going_home") return;
     spawnFeed(performance.now());
   });
 
   // ===== Right-click context menu =====
   function showCtxMenu(clientX, clientY) {
+    // mark current species with ✓
+    ctxMenuEl.querySelectorAll(".ctx-item[data-species]").forEach(it => {
+      if (it.dataset.species === state.species) it.classList.add("active");
+      else it.classList.remove("active");
+    });
+    // show only the color row for current species
+    const currentColor = catEl.getAttribute("data-color");
+    ctxMenuEl.querySelectorAll(".ctx-item[data-color]").forEach(it => {
+      const shown = it.classList.contains("color-" + state.species);
+      it.style.display = shown ? "" : "none";
+      if (shown && it.dataset.color === currentColor) it.classList.add("active");
+      else it.classList.remove("active");
+    });
     // mark the currently-active toy with ✓
     ctxMenuEl.querySelectorAll(".ctx-item[data-toy]").forEach(it => {
       if (state.toy && it.dataset.toy === state.toy.type) it.classList.add("active");
@@ -2362,11 +2527,23 @@ window.addEventListener("DOMContentLoaded", () => {
     if (!item) return;
     const color = item.dataset.color;
     const act = item.dataset.act;
-    if (color && COLORS.includes(color)) {
+    if (act === "species") {
+      const sp = item.dataset.species;
+      if (ALL_SPECIES.includes(sp) && sp !== state.species) {
+        state.species = sp;
+        catEl.setAttribute("data-species", sp);
+        catEl.setAttribute("data-color", SPECIES_DEFAULT_COLOR[sp]);
+        showBubble("...?", 900);
+      }
+    } else if (color && COLORS.includes(color)) {
       catEl.setAttribute("data-color", color);
       showBubble("好看吗?", 1200);
     } else if (act === "sleep") {
       startSleeping(performance.now());
+    } else if (act === "go-home") {
+      goHome(performance.now());
+    } else if (act === "feed") {
+      spawnFeed(performance.now());
     } else if (act === "photo") {
       takePhoto(performance.now());
     } else if (act === "toy") {

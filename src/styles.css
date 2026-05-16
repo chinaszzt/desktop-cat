@@ -45,6 +45,22 @@ html, body {
   overflow: visible;
 }
 
+/* Species parts toggle */
+.species-pig, .species-bear { display: none; }
+#cat[data-species="pig"]  .species-pig  { display: inline; }
+#cat[data-species="bear"] .species-bear { display: inline; }
+/* Hide cat-only parts when on pig / bear */
+#cat[data-species="pig"]  #cat-ears,
+#cat[data-species="pig"]  #cat-nose,
+#cat[data-species="pig"]  #tail,
+#cat[data-species="pig"]  #whisker-l,
+#cat[data-species="pig"]  #whisker-r,
+#cat[data-species="bear"] #cat-ears,
+#cat[data-species="bear"] #cat-nose,
+#cat[data-species="bear"] #tail,
+#cat[data-species="bear"] #whisker-l,
+#cat[data-species="bear"] #whisker-r { display: none; }
+
 /* Color palettes (CSS variables) */
 #cat[data-color="orange"] {
   --body: #F4A56B;
@@ -96,6 +112,118 @@ html, body {
   --eye: #FFD23B;
   --whisker: #FFFFFF;
   --blush: #FFB3BA;
+}
+
+/* ----- Pig palettes ----- */
+#cat[data-species="pig"][data-color="pink"] {
+  --body: #F5B5C0;
+  --body-dark: #C2778A;
+  --belly: #FFE6EE;
+  --inner-ear: #E8929E;
+  --nose: #C2546F;
+  --eye: #2D1A0A;
+  --whisker: transparent;
+  --blush: #FFB3BA;
+  --snout: #E89DAE;
+}
+#cat[data-species="pig"][data-color="cream"] {
+  --body: #FFE0C2;
+  --body-dark: #D8B591;
+  --belly: #FFF4E0;
+  --inner-ear: #E8B998;
+  --nose: #B27858;
+  --eye: #2D1A0A;
+  --whisker: transparent;
+  --blush: #FFB3BA;
+  --snout: #E8C6A6;
+}
+
+/* ----- Bear palettes ----- */
+#cat[data-species="bear"][data-color="brown"] {
+  --body: #A87248;
+  --body-dark: #5E3D1F;
+  --belly: #D2A878;
+  --inner-ear: #6A4525;
+  --nose: #1A0F0F;
+  --eye: #2D1A0A;
+  --whisker: transparent;
+  --blush: #FFB3BA;
+}
+#cat[data-species="bear"][data-color="black"] {
+  --body: #3C2D2D;
+  --body-dark: #1A0F0F;
+  --belly: #5E4C4C;
+  --inner-ear: #2A1818;
+  --nose: #000000;
+  --eye: #FFC840;
+  --whisker: transparent;
+  --blush: #FFB3BA;
+}
+#cat[data-species="bear"][data-color="polar"] {
+  --body: #F2EDE2;
+  --body-dark: #C8C0B0;
+  --belly: #FFFFFF;
+  --inner-ear: #E2D6BE;
+  --nose: #1A0F0F;
+  --eye: #2D1A0A;
+  --whisker: transparent;
+  --blush: #FFB3BA;
+}
+
+/* Pig palettes */
+#cat[data-species="pig"][data-color="pink"] {
+  --body: #F5B5C0;
+  --body-dark: #C2778A;
+  --belly: #FFE6EE;
+  --inner-ear: #E89BAE;
+  --snout: #E89DAE;
+  --nose: #C2546F;
+  --eye: #2D1A0A;
+  --whisker: transparent;
+  --blush: #FFB3BA;
+}
+#cat[data-species="pig"][data-color="cream"] {
+  --body: #FFE0C2;
+  --body-dark: #D9B391;
+  --belly: #FFF5E2;
+  --inner-ear: #FFC8A0;
+  --snout: #E8BB95;
+  --nose: #B27A60;
+  --eye: #2D1A0A;
+  --whisker: transparent;
+  --blush: #FFB3BA;
+}
+
+/* Bear palettes */
+#cat[data-species="bear"][data-color="brown"] {
+  --body: #B0794E;
+  --body-dark: #6B4623;
+  --belly: #DBB48B;
+  --inner-ear: #8C5A30;
+  --nose: #2D1A0A;
+  --eye: #2D1A0A;
+  --whisker: transparent;
+  --blush: #E89C7A;
+}
+#cat[data-species="bear"][data-color="black"] {
+  --body: #3A2828;
+  --body-dark: #1A0F0F;
+  --belly: #5A4848;
+  --inner-ear: #2A1818;
+  --nose: #050505;
+  --eye: #FFD23B;
+  --whisker: transparent;
+  --blush: #C0807A;
+}
+#cat[data-species="bear"][data-color="polar"] {
+  --body: #F4F0E8;
+  --body-dark: #C8C0B0;
+  --belly: #FFFFFF;
+  --inner-ear: #E8DCC8;
+  --nose: #1A0F0F;
+  --eye: #2D1A0A;
+  --whisker: transparent;
+  --blush: #FFD0D0;
 }
 
 /* Eye / mouth variants — switched by data-eyes / data-mouth */
