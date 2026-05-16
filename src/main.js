@@ -143,10 +143,14 @@ const CAT_SVG = `
   <ellipse cx="42" cy="70" rx="4.5" ry="2.6" fill="var(--blush)" opacity="0.7"/>
   <ellipse cx="78" cy="70" rx="4.5" ry="2.6" fill="var(--blush)" opacity="0.7"/>
 
-  <path d="M 40 72 L 26 70" stroke="var(--whisker)" stroke-width="1" stroke-linecap="round" opacity="0.85"/>
-  <path d="M 40 74 L 26 76" stroke="var(--whisker)" stroke-width="1" stroke-linecap="round" opacity="0.85"/>
-  <path d="M 80 72 L 94 70" stroke="var(--whisker)" stroke-width="1" stroke-linecap="round" opacity="0.85"/>
-  <path d="M 80 74 L 94 76" stroke="var(--whisker)" stroke-width="1" stroke-linecap="round" opacity="0.85"/>
+  <g id="whisker-l" style="transform-origin: 40px 73px;">
+    <path d="M 40 72 L 26 70" stroke="var(--whisker)" stroke-width="1" stroke-linecap="round" opacity="0.85"/>
+    <path d="M 40 74 L 26 76" stroke="var(--whisker)" stroke-width="1" stroke-linecap="round" opacity="0.85"/>
+  </g>
+  <g id="whisker-r" style="transform-origin: 80px 73px;">
+    <path d="M 80 72 L 94 70" stroke="var(--whisker)" stroke-width="1" stroke-linecap="round" opacity="0.85"/>
+    <path d="M 80 74 L 94 76" stroke="var(--whisker)" stroke-width="1" stroke-linecap="round" opacity="0.85"/>
+  </g>
 
   <g id="leg-fl" style="transform-origin: 42px 95px;">
     <ellipse cx="42" cy="98" rx="9" ry="5" fill="var(--body-dark)"/>
@@ -159,6 +163,22 @@ const CAT_SVG = `
 // ===== State =====
 const COLORS = ["orange", "calico", "cow", "tabby", "tuxedo"];
 const MEOWS = ["喵~", "喵喵~", "喵呜~", "咕噜咕噜..."];
+const MEOW_BY_MOOD = {
+  happy:    ["喵~", "喵♪", "咕噜咕噜~", "喵呼~", "喵♡"],
+  excited:  ["喵!", "喵喵!", "嗷呜!", "喵呜!", "喵—!"],
+  curious:  ["喵?", "嗯?", "...?", "喵嗯?", "唔?"],
+  sleepy:   ["唔...", "喵...", "...zzz", "嗯......"],
+  grumpy:   ["嘶!", "哼!", "fff...", "走开!"],
+  shy:      ["...", "唔...", "(///)", "嗯?"],
+};
+function pickMeowByMood(now) {
+  if (state.mode === "sleeping" || state.sleepiness > 75) return pick(MEOW_BY_MOOD.sleepy);
+  if (state.mood < 30) return pick(MEOW_BY_MOOD.grumpy);
+  if (state.cursorMoveAmt > 220) return pick(MEOW_BY_MOOD.excited);
+  if (now - state.lastSigMoveT > 30000) return pick(MEOW_BY_MOOD.curious);
+  if (state.mood > 70) return pick(MEOW_BY_MOOD.happy);
+  return pick(MEOWS);
+}
 const HEARTS = ["❤", "❤❤", "♡", "(´• ω •`)♡"];
 const SLEEPY = ["zzz...", "Zzz", "💤"];
 
@@ -205,12 +225,23 @@ const state = {
   lastSwatCursorT: 0,
   // startle (mouse rushes at cat)
   lastStartleT: 0,
+  // particle/atmos timers
+  lastFootprintX: 0, lastFootprintY: 0, footprintSide: 0,
+  lastZT: 0, lastHeartT: 0,
+  // laser trail
+  laserTrail: [],
+  // bird / butterfly fly-by
+  bird: null,
+  lastBirdT: 0,
+  // mood 0..100 (50 is neutral)
+  mood: 50,
   // smoothed display values (1st-order low-pass per frame) — kills mode-switch pops
   disp: {
     bodyTilt: 0, bodyScaleX: 1, bodyScaleY: 1, bodyBob: 0,
     tailSwing: 0, legFLY: 0, legFRY: 0,
     eyeScaleY: 1, eyeShiftX: 0, eyeShiftY: 0,
     mouthScaleY: 1, mouthOpenOpacity: 0,
+    pupilScale: 1,
   },
   modeUntil: 0,
   // gait: walk | run  (only meaningful in walking / interested)
@@ -250,6 +281,9 @@ const hatEl = document.getElementById("hat");
 const toyEl = document.getElementById("toy");
 const feedEl = document.getElementById("feed-emoji");
 const flashEl = document.getElementById("flash");
+const birdEl = document.getElementById("bird");
+const laserTrailEl = document.getElementById("laser-trail");
+const particlesEl = document.getElementById("particles");
 
 bodyEl.innerHTML = CAT_SVG;
 
@@ -263,6 +297,8 @@ const eyeL = document.getElementById("eye-l");
 const eyeR = document.getElementById("eye-r");
 const mouth = document.getElementById("mouth");
 const mouthOpen = document.getElementById("mouth-open");
+const whiskerL = document.getElementById("whisker-l");
+const whiskerR = document.getElementById("whisker-r");
 
 // ===== Helpers =====
 function rand(a, b) { return a + Math.random() * (b - a); }
@@ -331,6 +367,31 @@ let yawnUntil = 0;
 const triggerBlink = () => { blinkUntil = performance.now() + 160; };
 const triggerYawn  = (dur=700) => { yawnUntil = performance.now() + dur; };
 
+// ===== Particle helpers =====
+const FOOTPRINT_SVG = `<svg viewBox="0 0 20 20" width="20" height="20"><ellipse cx="10" cy="14" rx="4" ry="3" fill="#3A2A20" opacity="0.35"/><circle cx="6" cy="9" r="1.7" fill="#3A2A20" opacity="0.35"/><circle cx="10" cy="7" r="1.7" fill="#3A2A20" opacity="0.35"/><circle cx="14" cy="9" r="1.7" fill="#3A2A20" opacity="0.35"/></svg>`;
+
+function _spawnParticle(klass, x, y, html, lifeMs) {
+  const el = document.createElement("div");
+  el.className = "particle " + klass;
+  el.style.left = x + "px";
+  el.style.top  = y + "px";
+  if (html !== null) el.innerHTML = html;
+  particlesEl.appendChild(el);
+  setTimeout(() => { el.remove(); }, lifeMs);
+}
+function spawnFootprint(x, y) { _spawnParticle("footprint", x, y, FOOTPRINT_SVG, 1700); }
+function spawnDust(x, y)      { _spawnParticle("dust",      x, y, "",            600); }
+function spawnZ(x, y) {
+  const c = pick(["z", "Z", "z", "Z"]);
+  _spawnParticle("zzz", x, y, c, 2300);
+}
+function spawnHeart(x, y) { _spawnParticle("heart", x, y, "❤", 1700); }
+
+// adjust mood, clamped
+function bumpMood(delta) {
+  state.mood = clamp(state.mood + delta, 0, 100);
+}
+
 function showBubble(text, dur = 1500) {
   bubbleTextEl.textContent = text;
   bubbleEl.classList.remove("hidden");
@@ -364,6 +425,7 @@ function selectFace(now) {
   else if (state.mode === "scratching") { eyes = "wide"; }
   else if (state.mode === "photo")    { eyes = "stars";  mouth = "smile"; }
   else if (state.mode === "startled") { eyes = "wide"; }
+  else if (state.mode === "bird_watch") { eyes = "wide"; mouth = "pursed"; }
   else if (state.mode === "chasing")  { eyes = "wide"; }
   else if (state.mode === "trick") {
     switch (state.trickAction) {
@@ -395,6 +457,9 @@ function selectFace(now) {
 
   // very sleepy → drooping happy eyes
   if (state.sleepiness > 80 && state.mode !== "sleeping" && eyes === "normal") eyes = "happy";
+  // mood influence on resting expression
+  if (state.mood < 28 && state.mode !== "sleeping" && eyes === "normal") eyes = "angry";
+  if (state.mood > 78 && state.mode !== "sleeping" && mouth === "normal") mouth = "smile";
 
   if (catEl.getAttribute("data-eyes")  !== eyes)  catEl.setAttribute("data-eyes",  eyes);
   if (catEl.getAttribute("data-mouth") !== mouth) catEl.setAttribute("data-mouth", mouth);
@@ -488,6 +553,8 @@ function scheduleJump(now) {
     dur: rand(380, 560),
     height: rand(14, 28),
   };
+  // take-off dust at feet
+  spawnDust(state.x + CAT_W / 2, state.y + CAT_H - 2);
 }
 
 function startIdle(now, longer = false) {
@@ -634,6 +701,52 @@ function cancelToy(now) {
   }
 }
 
+function spawnBird(now) {
+  if (state.bird) return;
+  const isButterfly = Math.random() < 0.45;
+  const goRight = Math.random() < 0.5;
+  const yStart = rand(70, Math.max(140, window.innerHeight * 0.45));
+  state.bird = {
+    type: isButterfly ? "butterfly" : "bird",
+    x: goRight ? -60 : window.innerWidth + 60,
+    y: yStart,
+    baseY: yStart,
+    vx: (goRight ? 1 : -1) * rand(0.18, 0.30),
+    t0: now,
+    expireT: now + 18000,
+  };
+  birdEl.textContent = isButterfly ? "🦋" : "🐦";
+  birdEl.style.left = state.bird.x + "px";
+  birdEl.style.top  = state.bird.y + "px";
+  birdEl.classList.remove("hidden");
+
+  // cat notices unless busy
+  if (state.mode === "walking" || state.mode === "idle") {
+    state.mode = "bird_watch";
+    state.modeStartT = now;
+    state.modeUntil = now + 5000;
+  }
+}
+
+function physBird(dt, now) {
+  if (!state.bird) return;
+  const b = state.bird;
+  b.x += b.vx * dt;
+  // wavy Y motion (more for butterfly)
+  const amp = b.type === "butterfly" ? 18 : 7;
+  const freq = b.type === "butterfly" ? 280 : 400;
+  const dispY = b.baseY + Math.sin((now - b.t0) / freq) * amp;
+  // flip direction emoji-wise (mirror via scale)
+  birdEl.style.left = b.x + "px";
+  birdEl.style.top  = dispY + "px";
+  birdEl.style.transform = `translate(-50%, -50%) scaleX(${b.vx > 0 ? -1 : 1})`;
+
+  if (now > b.expireT || b.x < -80 || b.x > window.innerWidth + 80) {
+    birdEl.classList.add("hidden");
+    state.bird = null;
+  }
+}
+
 function pickToyType() {
   const r = Math.random();
   if (r < 0.30) return "yarn";
@@ -757,6 +870,11 @@ function physToy(dt, now) {
     if (t.type === "wand") {
       t.spin = Math.sin(now / 380) * 22;   // gentle feather sway
     }
+    if (t.type === "laser") {
+      state.laserTrail.push({ x: t.x, y: t.y, t: now });
+      while (state.laserTrail.length > 12) state.laserTrail.shift();
+      while (state.laserTrail.length && now - state.laserTrail[0].t > 240) state.laserTrail.shift();
+    }
   }
 
   // mirror toy's screen position to DOM
@@ -770,6 +888,23 @@ function physToy(dt, now) {
     tform += ` rotate(${t.spin || 0}deg)`;
   }
   toyEl.style.transform = tform;
+}
+
+function renderLaserTrail() {
+  if (!state.toy || state.toy.type !== "laser" || state.laserTrail.length < 2) {
+    if (laserTrailEl.firstChild) laserTrailEl.innerHTML = "";
+    return;
+  }
+  const w = window.innerWidth, h = window.innerHeight;
+  laserTrailEl.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  let html = "";
+  const arr = state.laserTrail;
+  for (let i = 1; i < arr.length; i++) {
+    const a = arr[i - 1], b = arr[i];
+    const op = (i / arr.length) * 0.55;
+    html += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#ff3535" stroke-width="${2 + i * 0.25}" stroke-opacity="${op}" stroke-linecap="round"/>`;
+  }
+  laserTrailEl.innerHTML = html;
 }
 
 function takePhoto(now) {
@@ -825,7 +960,7 @@ function startTrick(now, action) {
     meow: 900, heart: 1300, spin: 700, pounce: 600, happy_jump: 900,
     grumpy: 1200, wave: 1400, shy: 1600, swat_cursor: 700,
   })[action];
-  if (action === "meow")   { showBubble(pick(MEOWS), 1300); triggerBlink(); }
+  if (action === "meow")   { showBubble(pickMeowByMood(now), 1300); triggerBlink(); }
   if (action === "heart")  { showBubble(pick(HEARTS), 1500); triggerBlink(); }
   if (action === "grumpy") { showBubble(pick(["嘶!", "哼!", "走开!", "別碰!"]), 1200); }
   if (action === "wave")   { showBubble(pick(["嗨~", "哟~", "Hi!"]), 1300); }
@@ -845,6 +980,9 @@ const FACING_DEADZONE = 18;
 function tick(now) {
   const dt = Math.min(50, now - lastT);
   lastT = now;
+
+  // ---- mood slow decay toward neutral 50 ----
+  state.mood += (50 - state.mood) * dt / 1000 * 0.003;
 
   // ---- sleepiness update ----
   if (state.mode === "sleeping") {
@@ -889,6 +1027,42 @@ function tick(now) {
 
   // ---- toy physics (independent of cat mode) ----
   physToy(dt, now);
+  renderLaserTrail();
+  physBird(dt, now);
+
+  // ---- chance for a bird / butterfly to fly through ----
+  if (!state.bird && now - state.lastBirdT > rand(120000, 240000)) {
+    state.lastBirdT = now;
+    if (Math.random() < 0.55) spawnBird(now);
+  }
+
+  // ---- footprints (every ~36 px of horizontal travel) ----
+  if (state.mode !== "sleeping" && state.mode !== "dragged" && state.mode !== "pet" && state.mode !== "photo") {
+    const trav = Math.hypot(state.x - state.lastFootprintX, state.y - state.lastFootprintY);
+    if (trav > 36) {
+      const off = state.footprintSide ? 10 : -10;
+      spawnFootprint(state.x + CAT_W / 2 + off, state.y + CAT_H - 6);
+      state.footprintSide = 1 - state.footprintSide;
+      state.lastFootprintX = state.x;
+      state.lastFootprintY = state.y;
+    }
+  } else {
+    // reset baseline so next motion doesn't dump a footprint
+    state.lastFootprintX = state.x;
+    state.lastFootprintY = state.y;
+  }
+
+  // ---- Zzz puffs while sleeping ----
+  if (state.mode === "sleeping" && now - state.lastZT > rand(900, 1600)) {
+    state.lastZT = now;
+    spawnZ(state.x + CAT_W / 2 + rand(8, 24), state.y + 30 + rand(-6, 6));
+  }
+
+  // ---- heart particles while being petted ----
+  if (state.mode === "pet" && now - state.lastHeartT > rand(450, 750)) {
+    state.lastHeartT = now;
+    spawnHeart(state.x + CAT_W / 2 + rand(-18, 18), state.y + 30);
+  }
 
   // ---- global feed/toy expiry (independent of mode, so tricks can't strand them) ----
   if (state.feed && now > state.feed.expireT) {
@@ -1029,7 +1203,8 @@ function tick(now) {
   // sleeping is sacred: only a click wakes the cat
   const lockedModes = new Set([
     "trick", "sleeping", "pet", "dragged", "dizzy",
-    "feeding", "playing", "clingy", "scratching", "photo", "startled"
+    "feeding", "playing", "clingy", "scratching", "photo", "startled",
+    "bird_watch",
   ]);
   if (!lockedModes.has(state.mode)) {
     if (cursorAlive && cursorActive && cdist < 280 && state.mode !== "interested") {
@@ -1174,6 +1349,7 @@ function tick(now) {
           feedEl.classList.add("hidden");
           state.feed = null;
           state.sleepiness = Math.max(0, state.sleepiness - 25);
+          bumpMood(15);
           triggerTailWag(now, 30, 7, 1800);
           showBubble("好饱~ 喵呜!", 1500);
           state.mode = "walking"; pickNewTarget(); startWalkLeg(now, false);
@@ -1256,6 +1432,7 @@ function tick(now) {
               yarn: "玩够了~", ball: "嘿!", paper: "...", mouse: "抓住啦!",
             };
             showBubble(msgs[t.type] || "玩够了~", 1200);
+            bumpMood(8);
             state.mode = "walking"; pickNewTarget(); startWalkLeg(now, false);
           }
         }
@@ -1304,6 +1481,15 @@ function tick(now) {
   } else if (state.mode === "startled") {
     if (now > state.modeUntil) {
       pickNewTarget(); startWalkLeg(now, false);
+    }
+  } else if (state.mode === "bird_watch") {
+    if (!state.bird || now > state.modeUntil) {
+      pickNewTarget(); startWalkLeg(now, false);
+    } else {
+      // face the bird
+      const bdx = state.bird.x - (state.x + CAT_W / 2);
+      if (bdx >  FACING_DEADZONE) state.facing = 1;
+      else if (bdx < -FACING_DEADZONE) state.facing = -1;
     }
   } else if (state.mode === "interested") {
     // not a straight chase — orbit/drift toward cursor area
@@ -1443,6 +1629,7 @@ function tick(now) {
     if (t >= 1) {
       state.jump = null;
       jumpSquish = 0.06;   // small landing squish
+      spawnDust(state.x + CAT_W / 2, state.y + CAT_H - 2);
     } else {
       jumpY = -Math.sin(t * Math.PI) * state.jump.height;
       if (t < 0.12) jumpSquish = (0.12 - t) / 0.12 * -0.08;  // crouch before jump
@@ -1464,6 +1651,7 @@ function tick(now) {
     if (t >= 1) {
       state.facingActual = state.turn.to;
       state.turn = null;
+      spawnDust(state.x + CAT_W / 2, state.y + CAT_H - 2);
     } else {
       turnY = -Math.sin(t * Math.PI) * state.turn.height;
       state.facingActual = (t > 0.5) ? state.turn.to : state.turn.from;
@@ -1731,6 +1919,13 @@ function tick(now) {
     bodyBob = Math.sin(now / 75) * 2 * Math.max(0, 1 - t);
     eyeScaleY = 1.15;
     legFLY = -2; legFRY = -2;
+  } else if (state.mode === "bird_watch") {
+    // tilt head up + excited tail swish
+    bodyTilt = -7 * state.facing;
+    bodyBob = Math.sin(now / 350) * 0.8;
+    tailSwing = Math.sin(now / 220) * 18;
+    eyeScaleY = 1.12;
+    legFLY = 0; legFRY = 0;
   } else if (state.mode === "photo") {
     const t = (now - state.modeStartT) / 1500;
     bodyBob = 0; bodyTilt = 0;
@@ -1942,6 +2137,18 @@ function tick(now) {
   lerpDisp("eyeShiftY",  eyeShiftY,  dt, 80);
   lerpDisp("mouthScaleY",      mouthScaleY,      dt, 70);
   lerpDisp("mouthOpenOpacity", mouthOpenOpacity, dt, 60);
+
+  // pupil dilation: large when excited, small when calm
+  let pupilTarget = 1;
+  if (state.mode === "chasing" || state.mode === "interested" || state.mode === "playing"
+      || state.mode === "watching" || state.mode === "startled" || state.mode === "feeding") {
+    pupilTarget = 1.18;
+  } else if (state.mode === "sleeping" || (state.mode === "idle" && (state.idleAction === "loaf" || state.idleAction === "sideways"))) {
+    pupilTarget = 0.82;
+  } else if (state.sleepiness > 70) {
+    pupilTarget = 0.9;
+  }
+  lerpDisp("pupilScale", pupilTarget, dt, 220);
   const D = state.disp;
 
   // ----- apply transforms (using smoothed values) -----
@@ -1962,10 +2169,18 @@ function tick(now) {
   legBR.style.transform = "";
   head.style.transform = "";
 
-  eyeL.style.transform = `translate(${D.eyeShiftX}px, ${D.eyeShiftY}px) scaleY(${D.eyeScaleY})`;
-  eyeR.style.transform = `translate(${D.eyeShiftX}px, ${D.eyeShiftY}px) scaleY(${D.eyeScaleY})`;
+  eyeL.style.transform = `translate(${D.eyeShiftX}px, ${D.eyeShiftY}px) scale(${D.pupilScale}, ${D.pupilScale * D.eyeScaleY})`;
+  eyeR.style.transform = `translate(${D.eyeShiftX}px, ${D.eyeShiftY}px) scale(${D.pupilScale}, ${D.pupilScale * D.eyeScaleY})`;
   mouthOpen.style.opacity = String(D.mouthOpenOpacity);
   mouth.style.transform = `scaleY(${D.mouthScaleY})`;
+
+  // whisker independent sway — bigger when relaxed/pet, smaller when alert
+  const wAmp = (state.mode === "pet" || state.mode === "sleeping") ? 4
+             : (state.mode === "chasing" || state.mode === "interested" || state.mode === "playing") ? 1
+             : 2.2;
+  const wPhase = now / 700;
+  whiskerL.style.transform = `rotate(${Math.sin(wPhase)       * wAmp}deg)`;
+  whiskerR.style.transform = `rotate(${Math.sin(wPhase + 0.4) * wAmp}deg)`;
 
   // ----- passthrough hit-test -----
   const ctxOpen = !ctxMenuEl.classList.contains("hidden");
@@ -2032,6 +2247,7 @@ window.addEventListener("DOMContentLoaded", () => {
       state.modeStartT = now;
       state.modeUntil = now + 900;
       showBubble("(°ロ°)", 800);
+      bumpMood(-8);
     } else if (press.pet) {
       // end pet
       state.mode = "walking";
@@ -2039,18 +2255,30 @@ window.addEventListener("DOMContentLoaded", () => {
       startWalkLeg(now, false);
       bubbleEl.classList.add("hidden");
       triggerTailWag(now, 26, 5, 1000);
+      bumpMood(12);
     } else {
       // short click → trick
-      const r = Math.random();
-      let action;
-      if      (r < 0.26) action = "meow";
-      else if (r < 0.44) action = "heart";
-      else if (r < 0.56) action = "spin";
-      else if (r < 0.65) action = "pounce";
-      else if (r < 0.73) action = "happy_jump";
-      else if (r < 0.83) action = "grumpy";
-      else if (r < 0.92) action = "wave";
-      else               action = "shy";
+      // mood-weighted pick — low mood gets more grumpy/shy, high mood gets more heart/jump
+      const m = state.mood / 100;
+      const weights = [
+        ["meow",       0.22, 0.22],
+        ["heart",      0.05, 0.32],
+        ["spin",       0.10, 0.18],
+        ["pounce",     0.10, 0.10],
+        ["happy_jump", 0.04, 0.14],
+        ["grumpy",     0.30, 0.02],
+        ["wave",       0.05, 0.12],
+        ["shy",        0.14, 0.06],
+      ];
+      let total = 0;
+      const ws = weights.map(([, w0, w1]) => { const w = w0 * (1 - m) + w1 * m; total += w; return w; });
+      let r = Math.random() * total;
+      let action = "meow";
+      for (let i = 0; i < weights.length; i++) {
+        r -= ws[i];
+        if (r < 0) { action = weights[i][0]; break; }
+      }
+      bumpMood(2);   // attention → small mood boost
       startTrick(now, action);
     }
   });

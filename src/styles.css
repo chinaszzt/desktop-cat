@@ -280,3 +280,77 @@ html, body {
   0%, 100% { opacity: 0; }
   15%      { opacity: 0.95; }
 }
+
+/* ===== Particle layer (footprints / dust / Zzz / hearts) ===== */
+#particles {
+  position: fixed; inset: 0; pointer-events: none; z-index: 1;
+}
+.particle {
+  position: absolute;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  font-family: "PingFang SC", "Hiragino Sans GB", sans-serif;
+  user-select: none;
+}
+.particle.footprint {
+  width: 20px; height: 20px;
+  animation: fp-fade 1.6s ease-out forwards;
+}
+.particle.dust {
+  width: 28px; height: 14px;
+  background: radial-gradient(ellipse at center, rgba(180,160,140,0.55) 25%, transparent 70%);
+  border-radius: 50%;
+  animation: dust-puff 0.55s ease-out forwards;
+}
+.particle.zzz {
+  font-size: 20px; font-weight: 800;
+  color: #5C8FCC;
+  text-shadow: 0 1px 3px rgba(255,255,255,0.9);
+  animation: zzz-rise 2.2s ease-out forwards;
+}
+.particle.heart {
+  font-size: 17px;
+  color: #E54F6B;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
+  animation: heart-rise 1.6s ease-out forwards;
+}
+@keyframes fp-fade {
+  0%   { opacity: 0.45; }
+  100% { opacity: 0; }
+}
+@keyframes dust-puff {
+  0%   { opacity: 0.85; transform: translate(-50%, -50%) scale(0.35); }
+  100% { opacity: 0;    transform: translate(-50%, -65%) scale(1.7); }
+}
+@keyframes zzz-rise {
+  0%   { opacity: 0; transform: translate(-50%, 0)     scale(0.6); }
+  20%  { opacity: 1; transform: translate(-50%, -16px) scale(1); }
+  100% { opacity: 0; transform: translate(calc(-50% + 12px), -54px) scale(1.25); }
+}
+@keyframes heart-rise {
+  0%   { opacity: 0; transform: translate(-50%, 0)     scale(0.4); }
+  20%  { opacity: 1; transform: translate(-50%, -10px) scale(1); }
+  100% { opacity: 0; transform: translate(calc(-50% + 8px), -52px) scale(1.4) rotate(-18deg); }
+}
+
+/* ===== Bird / butterfly fly-by ===== */
+#bird {
+  position: absolute;
+  font-size: 32px;
+  pointer-events: none;
+  z-index: 1;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.18));
+  transform: translate(-50%, -50%);
+  will-change: transform, left, top;
+}
+#bird.hidden { display: none; }
+
+/* ===== Laser trail ===== */
+#laser-trail {
+  position: fixed;
+  inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
