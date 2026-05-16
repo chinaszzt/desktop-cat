@@ -215,6 +215,54 @@ const SPECIES_FOOD = {
 // pigs and bears amble slower than cats
 const SPECIES_SPEED = { cat: 1.0, pig: 0.78, bear: 0.72 };
 function speciesSpeed() { return SPECIES_SPEED[state.species] || 1; }
+
+const SPECIES_DISPLAY_NAME = { cat: "🐈 小猫", pig: "🐷 小猪", bear: "🐻 小熊" };
+const MODE_STATUS_TEXT = {
+  walking:     "溜达中~",
+  idle:        "发呆中...",
+  interested:  "盯着鼠标看~",
+  watching:    "警觉中!",
+  chasing:     "狩猎中!",
+  trick:       "在表演~",
+  sleeping:    "睡着了 💤",
+  pet:         "被抚摸~ ❤",
+  dragged:     "被拎起来啦",
+  dizzy:       "晕乎乎...",
+  feeding:     "吃饭中~",
+  playing:     "玩耍中!",
+  clingy:      "想你了~ ❤",
+  scratching:  "抓墙中!",
+  photo:       "茄子~ 📸",
+  startled:    "吓一跳!",
+  bird_watch:  "看小鸟~",
+  in_bed:      "窝里睡觉 💤",
+  going_home:  "回窝中...",
+};
+
+function updateInfoPanel() {
+  const nameEl = ctxMenuEl.querySelector(".info-name");
+  const moodEl = ctxMenuEl.querySelector(".info-mood");
+  const moodVal = ctxMenuEl.querySelector(".info-mood-val");
+  const sleepEl = ctxMenuEl.querySelector(".info-sleep");
+  const sleepVal = ctxMenuEl.querySelector(".info-sleep-val");
+  const statusEl = ctxMenuEl.querySelector(".info-status");
+  if (!nameEl) return;
+
+  nameEl.textContent = SPECIES_DISPLAY_NAME[state.species] || "小动物";
+
+  const mood = Math.round(state.mood);
+  moodEl.style.width = mood + "%";
+  moodVal.textContent = mood;
+  moodEl.classList.toggle("is-low",  mood < 30);
+  moodEl.classList.toggle("is-high", mood > 75);
+
+  const sleepi = Math.round(state.sleepiness);
+  sleepEl.style.width = sleepi + "%";
+  sleepVal.textContent = sleepi;
+  sleepEl.classList.toggle("is-high", sleepi > 70);
+
+  statusEl.textContent = MODE_STATUS_TEXT[state.mode] || state.mode;
+}
 const COLORS = [...SPECIES_COLORS.cat, ...SPECIES_COLORS.pig, ...SPECIES_COLORS.bear];
 const SPECIES_SOUNDS = {
   cat: {
@@ -2480,6 +2528,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // ===== Right-click context menu =====
   function showCtxMenu(clientX, clientY) {
+    updateInfoPanel();
     // mark current species with ✓
     ctxMenuEl.querySelectorAll(".ctx-item[data-species]").forEach(it => {
       if (it.dataset.species === state.species) it.classList.add("active");
