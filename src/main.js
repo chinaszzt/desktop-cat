@@ -871,9 +871,15 @@ function physToy(dt, now) {
       t.spin = Math.sin(now / 380) * 22;   // gentle feather sway
     }
     if (t.type === "laser") {
-      state.laserTrail.push({ x: t.x, y: t.y, t: now });
+      const last = state.laserTrail[state.laserTrail.length - 1];
+      // only push when actually moving — keeps trail from piling up while idle
+      if (!last || Math.hypot(t.x - last.x, t.y - last.y) > 2) {
+        state.laserTrail.push({ x: t.x, y: t.y, t: now });
+      }
       while (state.laserTrail.length > 12) state.laserTrail.shift();
-      while (state.laserTrail.length && now - state.laserTrail[0].t > 240) state.laserTrail.shift();
+      while (state.laserTrail.length && now - state.laserTrail[0].t > 220) state.laserTrail.shift();
+    } else {
+      state.laserTrail.length = 0;
     }
   }
 
