@@ -182,9 +182,9 @@ const CAT_SVG = `
     <path d="M 36 40 Q 36 46, 41 45 Q 43 41, 39 37 Z" fill="var(--inner-ear)" opacity="0.7"/>
     <path d="M 88 38 Q 92 50, 78 50 Q 70 42, 76 30 Q 84 30, 88 38 Z" fill="var(--body-dark)"/>
     <path d="M 84 40 Q 84 46, 79 45 Q 77 41, 81 37 Z" fill="var(--inner-ear)" opacity="0.7"/>
-    <ellipse cx="60" cy="69" rx="11" ry="7" fill="var(--snout, #E89DAE)"/>
-    <ellipse cx="55" cy="69" rx="1.4" ry="2.2" fill="#2D1A0A"/>
-    <ellipse cx="65" cy="69" rx="1.4" ry="2.2" fill="#2D1A0A"/>
+    <ellipse cx="60" cy="74" rx="10" ry="5.5" fill="var(--snout, #E89DAE)"/>
+    <ellipse cx="55" cy="74" rx="1.3" ry="1.8" fill="#2D1A0A"/>
+    <ellipse cx="65" cy="74" rx="1.3" ry="1.8" fill="#2D1A0A"/>
   </g>
 
   <!-- bear parts: round ears, big black nose, tiny round tail -->
@@ -1329,11 +1329,15 @@ function tick(now) {
     triggerTailWag(now, 22, 4, 5000);
   }
 
-  // ---- ambient meow: occasionally talks to itself ----
+  // ---- ambient self-talk: occasionally mutters in its own voice ----
   if (state.mode !== "sleeping" && state.mode !== "pet" && state.mode !== "photo"
+      && state.mode !== "in_bed"
       && now - state.lastAmbientMeowT > rand(35000, 70000)) {
     state.lastAmbientMeowT = now;
-    if (Math.random() < 0.5) showBubble(pick(["喵?", "喵...", "嗯?", "..."]), 1100);
+    if (Math.random() < 0.5) {
+      const sounds = SPECIES_SOUNDS[state.species] || SPECIES_SOUNDS.cat;
+      showBubble(pick(sounds.curious), 1100);
+    }
   }
 
   // ---- cursor-derived constants (used by env detection AND mode transitions below) ----
@@ -2647,10 +2651,33 @@ window.addEventListener("DOMContentLoaded", () => {
     requestAnimationFrame(() => {
       const r = ctxMenuEl.getBoundingClientRect();
       let x = clientX, y = clientY;
-      if (x + r.width  > window.innerWidth)  x = window.innerWidth  - r.width  - 8;
-      if (y + r.height > window.innerHeight) y = window.innerHeight - r.height - 8;
+      // open to the left if too close to the right edge
+      if (x + r.width  > window.innerWidth - 8)  x = Math.max(8, clientX - r.width);
+      // open upward if too close to the bottom edge
+      if (y + r.height > window.innerHeight - 8) y = Math.max(8, clientY - r.height);
       ctxMenuEl.style.left = x + "px";
       ctxMenuEl.style.top  = y + "px";
+
+      // submenu direction — flip to left side when the parent row sits too close to the right
+      ctxMenuEl.querySelectorAll(".has-sub").forEach((hs) => {
+        const sub = hs.querySelector(".ctx-submenu");
+        if (!sub) return;
+        const parentR = hs.getBoundingClientRect();
+        // estimate submenu width (use a min that matches CSS min-width)
+        const subW = sub.offsetWidth || 170;
+        const fitsRight = parentR.right + subW + 12 <= window.innerWidth;
+        if (fitsRight) {
+          sub.style.left = "100%";
+          sub.style.right = "auto";
+          sub.style.paddingLeft = "6px";
+          sub.style.paddingRight = "0";
+        } else {
+          sub.style.left = "auto";
+          sub.style.right = "100%";
+          sub.style.paddingLeft = "0";
+          sub.style.paddingRight = "6px";
+        }
+      });
     });
   }
   function hideCtxMenu() { ctxMenuEl.classList.add("hidden"); }
