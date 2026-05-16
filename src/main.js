@@ -2325,8 +2325,16 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // ===== Right-click context menu =====
   function showCtxMenu(clientX, clientY) {
+    // mark the currently-active toy with ✓
+    ctxMenuEl.querySelectorAll(".ctx-item[data-toy]").forEach(it => {
+      if (state.toy && it.dataset.toy === state.toy.type) it.classList.add("active");
+      else it.classList.remove("active");
+    });
+    // hide the cancel row when no toy is out
+    const cancelRow = ctxMenuEl.querySelector('.ctx-item[data-act="toy-cancel"]');
+    if (cancelRow) cancelRow.style.display = state.toy ? "" : "none";
+
     ctxMenuEl.classList.remove("hidden");
-    // measure then position so it never goes offscreen
     requestAnimationFrame(() => {
       const r = ctxMenuEl.getBoundingClientRect();
       let x = clientX, y = clientY;
@@ -2360,7 +2368,13 @@ window.addEventListener("DOMContentLoaded", () => {
       takePhoto(performance.now());
     } else if (act === "toy") {
       const type = item.dataset.toy || undefined;
-      spawnToy(performance.now(), type);
+      const now = performance.now();
+      if (state.toy && state.toy.type === type) {
+        cancelToy(now);                       // toggle off the active toy
+      } else {
+        if (state.toy) cancelToy(now);        // swap out whatever was out
+        spawnToy(now, type);
+      }
     } else if (act === "toy-cancel") {
       cancelToy(performance.now());
     } else if (act === "quit") {

@@ -203,6 +203,22 @@ html, body {
 .ctx-item:hover { background: #FFE7C5; }
 .ctx-item.ctx-danger { color: #C24A4A; }
 .ctx-item.ctx-danger:hover { background: #FFDCDC; }
+.ctx-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ctx-item.active {
+  background: rgba(42, 159, 74, 0.10);
+  color: #2A6A30;
+  font-weight: 600;
+}
+.ctx-item.active::after {
+  content: "✓";
+  color: #2A9F4A;
+  font-weight: 800;
+  margin-left: 10px;
+}
 .ctx-sep {
   height: 1px;
   background: #F0E0CC;
