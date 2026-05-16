@@ -1,6 +1,20 @@
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
 
+// debug overlay
+window.addEventListener("error", (e) => {
+  const div = document.createElement("div");
+  div.style.cssText = "position:fixed;top:20px;left:20px;background:#c33;color:#fff;padding:8px 12px;font:12px monospace;z-index:9999;border-radius:6px;max-width:80vw;pointer-events:auto;white-space:pre-wrap;";
+  div.textContent = "ERR: " + (e.message || "?") + "\n@ " + (e.filename||"").split("/").pop() + ":" + (e.lineno||"?") + ":" + (e.colno||"?");
+  document.body.appendChild(div);
+});
+window.addEventListener("unhandledrejection", (e) => {
+  const div = document.createElement("div");
+  div.style.cssText = "position:fixed;top:80px;left:20px;background:#c93;color:#fff;padding:8px 12px;font:12px monospace;z-index:9999;border-radius:6px;max-width:80vw;";
+  div.textContent = "REJECT: " + (e.reason && e.reason.message || e.reason || "?");
+  document.body.appendChild(div);
+});
+
 // ===== Cat SVG (团子款) =====
 const CAT_SVG = `
 <svg viewBox="0 0 120 110" xmlns="http://www.w3.org/2000/svg" class="cat-svg" preserveAspectRatio="xMidYMax meet">
@@ -787,13 +801,15 @@ function spawnToy(now, type) {
   setToyVisual(type);
   toyEl.style.left = tx + "px";
   toyEl.style.top  = ty + "px";
-  toyEl.style.transform = "translate(-50%, -50%) scale(0)";
+  toyEl.style.transform = "translate(-50%, -50%)";
+  toyEl.style.opacity = "0";
+  toyEl.style.transition = "";   // make sure no leftover transform transition
   toyEl.classList.remove("hidden");
-  // pop-in
+  // fade in via opacity only — physics owns transform / left / top
   requestAnimationFrame(() => {
-    toyEl.style.transition = "transform 0.32s cubic-bezier(.3,1.7,.5,1)";
-    toyEl.style.transform = "translate(-50%, -50%) scale(1)";
-    setTimeout(() => { toyEl.style.transition = ""; }, 360);
+    toyEl.style.transition = "opacity 0.3s ease-out";
+    toyEl.style.opacity = "1";
+    setTimeout(() => { toyEl.style.transition = ""; }, 320);
   });
 
   state.mode = "playing";
@@ -984,6 +1000,7 @@ const CHASE_DEADZONE = 80;
 const FACING_DEADZONE = 18;
 
 function tick(now) {
+ try {
   const dt = Math.min(50, now - lastT);
   lastT = now;
 
@@ -1855,6 +1872,10 @@ function tick(now) {
     eyeScaleY = Math.min(eyeScaleY, 0.5);
   }
 
+  // declarations used across multiple mode-render blocks below
+  let swatPawShiftX = 0, swatPawShiftY = 0;
+  let swatPawWhich = null;
+
   // ----- New mode visuals -----
   if (state.mode === "pet") {
     eyeScaleY = 0.35;
@@ -2018,8 +2039,7 @@ function tick(now) {
   }
 
   // ----- CHASE rendering: leap forward lean + swat strike pose -----
-  let swatPawShiftX = 0, swatPawShiftY = 0;
-  let swatPawWhich = null;
+  // (moved swatPaw* declarations earlier)
   if (state.mode === "chasing" && state.chase) {
     const c = state.chase;
     if (c.variant === "leap" || c.variant === "leap_swat") {
@@ -2204,6 +2224,14 @@ function tick(now) {
   }
 
   requestAnimationFrame(tick);
+ } catch (err) {
+  const div = document.createElement("div");
+  div.style.cssText = "position:fixed;top:140px;left:20px;background:#900;color:#fff;padding:8px 12px;font:12px monospace;z-index:9999;border-radius:6px;max-width:80vw;white-space:pre-wrap;";
+  div.textContent = "TICK ERR: " + (err && err.message) + "\n" + (err && err.stack || "").split("\n").slice(0, 4).join("\n");
+  document.body.appendChild(div);
+  // try to keep ticking so other frames can run
+  requestAnimationFrame(tick);
+ }
 }
 
 // ===== Wire up =====
