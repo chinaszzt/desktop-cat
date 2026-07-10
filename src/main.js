@@ -237,6 +237,8 @@ const MODE_STATUS_TEXT = {
   bird_watch:  "看小鸟~",
   in_bed:      "窝里睡觉 💤",
   going_home:  "回窝中...",
+  gifting:     "叼来礼物~ 🎁",
+  butterfly_nose: "鼻尖有蝴蝶! 🦋",
 };
 
 function updateInfoPanel() {
@@ -357,6 +359,11 @@ const state = {
   dreamTwitch: null,             // { t0, dur } when a sleep-twitch is animating
   // mud splatter throttle during the pig's mud_roll idle action
   lastMudT: 0,
+  // gifting: pet carries a little present over to the cursor
+  gift: null,                    // { emoji, dropped, dropT }
+  lastGiftT: 0,                  // re-based on DOMContentLoaded so it can't fire right at startup
+  // double-tap detection for the kiss trick
+  lastTapT: 0,
   // laser trail
   laserTrail: [],
   // bird / butterfly fly-by
@@ -412,6 +419,7 @@ const ctxMenuEl = document.getElementById("ctx-menu");
 const hatEl = document.getElementById("hat");
 const toyEl = document.getElementById("toy");
 const feedEl = document.getElementById("feed-emoji");
+const giftEl = document.getElementById("gift");
 const flashEl = document.getElementById("flash");
 const birdEl = document.getElementById("bird");
 const bedEl = document.getElementById("bed");
@@ -629,6 +637,11 @@ function selectFace(now) {
   else if (state.mode === "photo")    { eyes = "stars";  mouth = "smile"; }
   else if (state.mode === "startled") { eyes = "wide"; }
   else if (state.mode === "bird_watch") { eyes = "wide"; mouth = "pursed"; }
+  else if (state.mode === "butterfly_nose") { eyes = "wide"; mouth = "pursed"; }
+  else if (state.mode === "gifting") {
+    if (state.gift && state.gift.dropped) { eyes = "happy"; mouth = "smile"; }  // proud presenter
+    else                                  { mouth = "pursed"; }                 // carrying it
+  }
   else if (state.mode === "in_bed")     { eyes = "happy"; }
   else if (state.mode === "going_home") { eyes = "happy"; }
   else if (state.mode === "chasing")  { eyes = "wide"; }
@@ -642,6 +655,7 @@ function selectFace(now) {
       case "wave":       eyes = "happy";  mouth = "smile"; break;
       case "shy":        eyes = "happy";  mouth = "shy"; break;
       case "swat_cursor":eyes = "wide"; break;
+      case "kiss":       eyes = "happy";  mouth = "pursed"; break;
     }
   }
   else if (state.mode === "idle") {
@@ -927,6 +941,57 @@ function spawnFeed(now) {
   state.chase = null; state.jump = null;
 }
 
+// ===== Gifting: the pet carries a little present over to the cursor =====
+const GIFT_EMOJI = ["🍂", "🌸", "🐭", "🍬"];
+
+function clearGiftTimers() {
+  clearTimeout(scheduleGiftFade._t);
+  clearTimeout(scheduleGiftFade._t2);
+}
+
+function startGifting(now) {
+  if (state.gift) return;
+  clearGiftTimers();               // a lingering previous gift must not hide this one later
+  state.mode = "gifting";
+  state.modeStartT = now;
+  state.lastGiftT = now;
+  state.gift = { emoji: pick(GIFT_EMOJI), dropped: false, dropT: 0 };
+  state.chase = null; state.jump = null; state.zoom = false;
+  // walk to a spot right beside the cursor (fall back to screen center when the cursor is stale)
+  const b = bounds();
+  const cursorOk = now - state.cursor.ts < 1500 && state.cursor.x > 0 && state.cursor.y > 0;
+  const gx = cursorOk ? state.cursor.x : window.innerWidth / 2;
+  const gy = cursorOk ? state.cursor.y : window.innerHeight / 2;
+  state.targetX = clamp(gx - CAT_W / 2 + rand(-50, 50), b.minX, b.maxX);
+  state.targetY = clamp(gy - CAT_H / 2 + rand(35, 60),  b.minY, b.maxY);
+  state.modeUntil = now + 15000;    // walk-there budget; reset on drop
+  giftEl.textContent = state.gift.emoji;
+  giftEl.classList.remove("hidden");
+  giftEl.classList.remove("fading");
+}
+
+// immediate cleanup — gifting got interrupted (drag / forced mode / debug)
+function hideGift() {
+  if (!state.gift) return;
+  clearGiftTimers();
+  state.gift = null;
+  giftEl.classList.add("hidden");
+  giftEl.classList.remove("fading");
+}
+
+// normal finish — leave the present on the ground, fade it out after 6s
+function scheduleGiftFade() {
+  state.gift = null;
+  clearGiftTimers();
+  scheduleGiftFade._t = setTimeout(() => {
+    giftEl.classList.add("fading");
+    scheduleGiftFade._t2 = setTimeout(() => {
+      giftEl.classList.add("hidden");
+      giftEl.classList.remove("fading");
+    }, 950);
+  }, 6000);
+}
+
 const TOY_EMOJI = {
   ball:  "⚽",
   paper: "📄",
@@ -1007,9 +1072,94 @@ function spawnBird(now) {
   }
 }
 
+// Butterfly that flies in and lands on the pet's nose (reuses the single #bird element).
+function spawnNoseButterfly(now) {
+  if (state.bird) return;
+  const fromRight = Math.random() < 0.5;
+  state.bird = {
+    type: "butterfly",
+    nose: true,
+    phase: "fly_in",              // fly_in → landed → fly_off
+    x: fromRight ? window.innerWidth + 60 : -60,
+    y: rand(80, Math.max(160, window.innerHeight * 0.4)),
+    baseY: 0,
+    vx: 0,
+    landT0: 0,
+    t0: now,
+    expireT: now + 20000,
+  };
+  birdEl.textContent = "🦋";
+  birdEl.style.left = state.bird.x + "px";
+  birdEl.style.top  = state.bird.y + "px";
+  birdEl.classList.remove("hidden");
+}
+
 function physBird(dt, now) {
   if (!state.bird) return;
   const b = state.bird;
+
+  if (b.nose) {
+    // --- nose-landing butterfly: fly_in → landed → fly_off ---
+    const noseX = state.x + 60;
+    const noseY = state.y + 68;
+    if (b.phase === "fly_in") {
+      const dx = noseX - b.x, dy = noseY - b.y;
+      const d = Math.hypot(dx, dy);
+      if (d < 5) {
+        b.x = noseX; b.y = noseY;
+        b.landT0 = now;
+        b.phase = "landed";
+        if (state.mode === "walking" || state.mode === "idle" || state.mode === "interested"
+            || state.mode === "watching" || state.mode === "bird_watch") {
+          state.mode = "butterfly_nose";
+          state.modeStartT = now;
+          state.modeUntil = now + 1800;
+          state.jump = null; state.turn = null; state.chase = null; state.zoom = false;
+        } else {
+          // pet is busy — don't force the freeze, just take off again
+          b.phase = "fly_off";
+          b.vx = (b.x < window.innerWidth / 2 ? -1 : 1) * rand(0.55, 0.75);
+          b.baseY = b.y; b.t0 = now;
+        }
+      } else {
+        const sp = 0.22;
+        b.x += (dx / d) * sp * dt;
+        b.y += (dy / d) * sp * dt;
+      }
+      // flutter that settles as it approaches the nose
+      const flutter = Math.min(10, Math.hypot(noseX - b.x, noseY - b.y) * 0.12);
+      birdEl.style.left = b.x + "px";
+      birdEl.style.top  = (b.y + Math.sin((now - b.t0) / 170) * flutter) + "px";
+      birdEl.style.transform = `translate(-50%, -50%) scaleX(${noseX - b.x > 0 ? -1 : 1})`;
+    } else if (b.phase === "landed") {
+      // ride the nose; user interaction (drag / click / pet) yanks the mode away → startled take-off
+      b.x = noseX; b.y = noseY;
+      const interrupted = state.mode !== "butterfly_nose";
+      if (interrupted || now - b.landT0 > 1800) {
+        if (!interrupted) startIdle(now, false, "sneeze");   // the sneeze scares it off
+        b.phase = "fly_off";
+        b.vx = (Math.random() < 0.5 ? -1 : 1) * rand(0.55, 0.75);   // ~3x fly-by speed
+        b.baseY = b.y; b.t0 = now;
+      }
+      birdEl.style.left = b.x + "px";
+      birdEl.style.top  = (b.y + Math.sin(now / 350) * 1.2) + "px";
+      birdEl.style.transform = `translate(-50%, -50%)`;
+    } else {
+      // fly_off — rush out with a wavy climb
+      b.x += b.vx * dt;
+      const age = now - b.t0;
+      const dispY = b.baseY + Math.sin(age / 130) * 14 - age * 0.055;
+      birdEl.style.left = b.x + "px";
+      birdEl.style.top  = dispY + "px";
+      birdEl.style.transform = `translate(-50%, -50%) scaleX(${b.vx > 0 ? -1 : 1})`;
+    }
+    if (now > b.expireT || b.x < -80 || b.x > window.innerWidth + 80) {
+      birdEl.classList.add("hidden");
+      state.bird = null;
+    }
+    return;
+  }
+
   b.x += b.vx * dt;
   // wavy Y motion (more for butterfly)
   const amp = b.type === "butterfly" ? 18 : 7;
@@ -1250,8 +1400,9 @@ function startTrick(now, action) {
   state.trickT0 = now;
   state.modeUntil = now + ({
     meow: 900, heart: 1300, spin: 700, pounce: 600, happy_jump: 900,
-    grumpy: 1200, wave: 1400, shy: 1600, swat_cursor: 700,
+    grumpy: 1200, wave: 1400, shy: 1600, swat_cursor: 700, kiss: 1100,
   })[action];
+  if (action === "kiss") state.kissShown = false;   // mid-animation 💋 fires once
   if (action === "meow")   { showBubble(pickMeowByMood(now), 1300); triggerBlink(); }
   if (action === "heart")  { showBubble(pick(HEARTS), 1500); triggerBlink(); }
   if (action === "grumpy") { showBubble(pick(["嘶!", "哼!", "走开!", "別碰!"]), 1200); }
@@ -1332,7 +1483,14 @@ function tick(now) {
   // ---- chance for a bird / butterfly to fly through ----
   if (!state.bird && now - state.lastBirdT > rand(120000, 240000)) {
     state.lastBirdT = now;
-    if (Math.random() < 0.55) spawnBird(now);
+    if (Math.random() < 0.55) {
+      // 30% of fly-bys become the nose-landing butterfly (only when the pet is free)
+      if (Math.random() < 0.3 && (state.mode === "walking" || state.mode === "idle")) {
+        spawnNoseButterfly(now);
+      } else {
+        spawnBird(now);
+      }
+    }
   }
 
   // ---- footprints (every ~36 px of horizontal travel) ----
@@ -1399,19 +1557,29 @@ function tick(now) {
   if (state.press && !state.press.drag && !state.press.pet && now - state.press.t0 > 500) {
     // caught mid belly-up ask? extra-happy reaction before we overwrite the mode below
     const caughtBellyUp = state.mode === "idle" && state.idleAction === "belly_up" && now < state.modeUntil;
+    // petted while proudly presenting a gift? extra-happy too (gift stays and fades on its own)
+    const caughtGifting = state.mode === "gifting" && state.gift && state.gift.dropped;
     state.press.pet = true;
     state.mode = "pet";
     state.modeStartT = now;
     state.jump = null; state.turn = null; state.chase = null;
     showBubble("咕噜咕噜~", 10000);   // long; cleared on mouseup
     triggerTailWag(now, 22, 4, 5000);
-    if (caughtBellyUp) {
-      bumpMood(12);
+    if (caughtBellyUp || caughtGifting) {
+      bumpMood(caughtBellyUp ? 12 : 10);
       const hx = state.x + CAT_W / 2, hy = state.y + 30;
-      for (let i = 0; i < 4; i++) {
+      const n = caughtBellyUp ? 4 : 3;
+      for (let i = 0; i < n; i++) {
         setTimeout(() => spawnHeart(hx + rand(-18, 18), hy), i * 120);
       }
     }
+    if (caughtGifting) scheduleGiftFade();
+  }
+
+  // ---- gifting got interrupted (drag / trick / menu-forced mode): drop the carried gift ----
+  if (state.gift && state.mode !== "gifting") {
+    if (state.gift.dropped) scheduleGiftFade();   // already on the ground — let it linger and fade
+    else hideGift();                              // still in the mouth — vanish with the interruption
   }
 
   // ---- ambient self-talk: occasionally mutters in its own voice ----
@@ -1432,6 +1600,14 @@ function tick(now) {
   const cdx_g = state.cursor.x - catCx_g;
   const cdy_g = state.cursor.y - catCy_g;
   const cdist_g = Math.hypot(cdx_g, cdy_g);
+
+  // ---- gifting: happy pet occasionally brings the user a little present ----
+  if ((state.mode === "walking" || state.mode === "idle")
+      && cursorAlive && state.mood > 55 && cdist_g > 150
+      && !state.gift
+      && now - state.lastGiftT > rand(180000, 300000)) {
+    startGifting(now);
+  }
 
   // ---- swat_cursor: mouse parked near the cat for a few seconds ----
   if (cursorAlive && state.cursorMoveAmt < 14 && (state.mode === "walking" || state.mode === "idle")) {
@@ -1532,7 +1708,7 @@ function tick(now) {
   const lockedModes = new Set([
     "trick", "sleeping", "pet", "dragged", "dizzy",
     "feeding", "playing", "clingy", "scratching", "photo", "startled",
-    "bird_watch", "in_bed", "going_home",
+    "bird_watch", "in_bed", "going_home", "gifting", "butterfly_nose",
   ]);
   if (!lockedModes.has(state.mode)) {
     if (cursorAlive && cursorActive && cdist < 280 && state.mode !== "interested") {
@@ -1866,6 +2042,45 @@ function tick(now) {
     }
   } else if (state.mode === "in_bed") {
     // bed-cat — no spontaneous transitions; click + drag handlers manage exit
+  } else if (state.mode === "gifting") {
+    const g = state.gift;
+    if (!g) {
+      // interrupted / cleaned up elsewhere
+      state.mode = "walking"; pickNewTarget(); startWalkLeg(now, false);
+    } else if (!g.dropped) {
+      const tdx = state.targetX - state.x;
+      const tdy = state.targetY - state.y;
+      const tdist = Math.hypot(tdx, tdy);
+      if (tdist < 20 || now > state.modeUntil) {
+        // arrived (or gave up finding the spot) — put the present down
+        g.dropped = true;
+        g.dropT = now;
+        const dir = state.facing >= 0 ? 1 : -1;
+        giftEl.style.left = (state.x + 60 + dir * 26) + "px";
+        giftEl.style.top  = (state.y + 88) + "px";
+        showBubble("给你的~♡", 2000);
+        triggerTailWag(now, 26, 5, 1800);
+        state.modeUntil = now + 2500;    // proud wait beside the gift
+      } else {
+        const sp = BASE_SPEED_WALK * speciesSpeed();
+        state.x += (tdx / tdist) * sp * dt;
+        state.y += (tdy / tdist) * sp * dt;
+        moving = true; moveDx = tdx;
+        // gift rides in the mouth
+        const dir = state.facing >= 0 ? 1 : -1;
+        giftEl.style.left = (state.x + 60 + dir * 14) + "px";
+        giftEl.style.top  = (state.y + 76) + "px";
+      }
+    } else if (now > state.modeUntil) {
+      // nobody picked it up — wander off, gift lingers then fades
+      scheduleGiftFade();
+      state.mode = "walking"; pickNewTarget(); startWalkLeg(now, false);
+    }
+  } else if (state.mode === "butterfly_nose") {
+    // frozen stiff — physBird drives the exit (sneeze); these are just safety nets
+    if (!state.bird || now > state.modeUntil + 600) {
+      pickNewTarget(); startWalkLeg(now, false);
+    }
   } else if (state.mode === "interested") {
     // not a straight chase — orbit/drift toward cursor area
     const desiredDist = 110;  // hover roughly 110px from cursor
@@ -2442,6 +2657,20 @@ function tick(now) {
     eyeScaleY = 0.5;
     bodyTilt = 2 * state.facing;
     tailSwing = Math.sin(now / 700) * 6;
+  } else if (state.mode === "butterfly_nose") {
+    // frozen stiff, straining to see its own nose
+    bodyTilt = 0;
+    bodyBob = Math.sin(now / 900) * 0.4;
+    legFLY = 0; legFRY = 0;
+    tailSwing = -14;                 // tail held stiffly still
+    eyeScaleY = 1.12;
+    eyeShiftY = 2.2;                 // both eyes strain down toward the nose
+  } else if (state.mode === "gifting" && state.gift && state.gift.dropped) {
+    // proud presentation pose beside the dropped gift
+    bodyScaleY = 0.97;
+    bodyBob = Math.sin(now / 500) * 0.8;
+    tailSwing = Math.sin(now / 350) * 14;
+    legFLY = 0; legFRY = 0;
   } else if (state.mode === "photo") {
     const t = (now - state.modeStartT) / 1500;
     bodyBob = 0; bodyTilt = 0;
@@ -2511,6 +2740,20 @@ function tick(now) {
           const k = Math.sin((tt - 0.25) / 0.35 * Math.PI);
           bodyTilt += -12 * state.facing * k;
           mouthOpenOpacity = 1; mouthScaleY = 1.4;
+        }
+        break;
+      }
+      case "kiss": {
+        // lean into the screen — puff up briefly with a sine envelope
+        const k = Math.sin(t * Math.PI);
+        bodyScaleX = 1 + k * 0.12;
+        bodyScaleY = 1 + k * 0.12;
+        bodyBob = -k * 2;
+        if (!state.kissShown && t > 0.45) {
+          state.kissShown = true;
+          _spawnParticle("kiss", state.x + CAT_W / 2 + rand(-8, 8), state.y + 22, "💋", 1400);
+          showBubble(pick(["啾~", "mua~", "啾♡"]), 1200);
+          bumpMood(8);
         }
         break;
       }
@@ -2607,9 +2850,9 @@ function tick(now) {
   const exDir = state.cursor.x - eyeCx;
   const eyDir = state.cursor.y - eyeCy;
   const ed = Math.hypot(exDir, eyDir);
-  // closed-eye modes never track the cursor
+  // closed-eye modes never track the cursor; butterfly_nose keeps the eyes on the nose
   const eyesClosed = state.mode === "sleeping" || state.mode === "in_bed";
-  if (cursorAlive && ed > 1 && !state.stareLocked && !eyesClosed) {
+  if (cursorAlive && ed > 1 && !state.stareLocked && !eyesClosed && state.mode !== "butterfly_nose") {
     const intensity = state.mode === "watching" ? 1.25 : 0.9;
     const fx = clamp((exDir / ed) * 2.6 * intensity, -2.6, 2.6);
     const fy = clamp((eyDir / ed) * 1.9 * intensity, -1.9, 1.9);
@@ -2663,6 +2906,8 @@ function tick(now) {
   if (state.mode === "chasing" || state.mode === "interested" || state.mode === "playing"
       || state.mode === "watching" || state.mode === "startled" || state.mode === "feeding") {
     pupilTarget = 1.18;
+  } else if (state.mode === "butterfly_nose") {
+    pupilTarget = 0.78;              // squeezed tight, cross-eyed at the nose
   } else if (state.mode === "sleeping" || (state.mode === "idle" && (state.idleAction === "loaf" || state.idleAction === "sideways"))) {
     pupilTarget = 0.82;
   } else if (state.sleepiness > 70) {
@@ -2756,6 +3001,9 @@ window.addEventListener("DOMContentLoaded", () => {
   // default "home" — bottom-right corner, out of the way
   state.homeX = window.innerWidth - CAT_W - 80;
   state.homeY = window.innerHeight - CAT_H - 80;
+  // gift cooldown base — pretend the last gift was 2 min ago so the earliest
+  // possible gift still takes ≥1 min after startup (cooldown ≥ 180s)
+  state.lastGiftT = performance.now() - 120000;
   pickNewTarget();
   applyHoliday();
 
@@ -2827,8 +3075,13 @@ window.addEventListener("DOMContentLoaded", () => {
     } else if (press.fromInBed) {
       // short tap on bed-cat → wake her up
       wakeFromBed(now);
+    } else if (state.lastTapT && now - state.lastTapT < 350) {
+      // second quick tap → kiss (first tap already played its normal trick)
+      state.lastTapT = 0;
+      startTrick(now, "kiss");
     } else {
       // short click → trick
+      state.lastTapT = now;
       // mood-weighted pick — low mood gets more grumpy/shy, high mood gets more heart/jump
       const m = state.mood / 100;
       const weights = [
@@ -2858,6 +3111,8 @@ window.addEventListener("DOMContentLoaded", () => {
     if (e.button !== 0) return;
     if (state.mode === "sleeping" || state.mode === "feeding"
         || state.mode === "in_bed" || state.mode === "going_home") return;
+    // fast double-tap already turned into a kiss — don't also spawn food
+    if (state.mode === "trick" && state.trickAction === "kiss") return;
     spawnFeed(performance.now());
   });
 
@@ -2973,6 +3228,19 @@ window.addEventListener("DOMContentLoaded", () => {
       state.chase = null; state.jump = null; state.turn = null;
       if (act === "debug-idle") startIdle(now, false, action);
       else                      startTrick(now, action);
+    } else if (act === "debug-event") {
+      const ev = item.dataset.action;
+      const now = performance.now();
+      if (state.mode === "sleeping") wakeUp(now);
+      if (state.mode === "in_bed") wakeFromBed(now);
+      if (ev === "gift") {
+        hideGift();                 // clear any in-flight gift, then force a fresh run
+        state.lastGiftT = 0;        // debug bypasses the cooldown
+        startGifting(now);
+      } else if (ev === "butterfly") {
+        if (state.bird) { birdEl.classList.add("hidden"); state.bird = null; }
+        spawnNoseButterfly(now);
+      }
     } else if (act === "quit") {
       invoke("quit_app").catch(() => {});
     }

@@ -566,6 +566,21 @@ html, body {
   100% { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
 }
 
+/* small gift carried in the pet's mouth / left on the ground */
+#gift {
+  position: absolute;
+  font-size: 16px;
+  pointer-events: none;
+  z-index: 7;
+  line-height: 1;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.18));
+  transform: translate(-50%, -50%);
+  opacity: 1;
+  transition: opacity 0.9s ease-out;
+}
+#gift.hidden { display: none; }
+#gift.fading { opacity: 0; }
+
 /* ===== Photo flash overlay ===== */
 #flash {
   position: fixed;
@@ -633,6 +648,11 @@ html, body {
   background: #8B6239;
   border-radius: 50%;
   animation: mud-splat 0.7s ease-out forwards;
+}
+.particle.kiss {
+  font-size: 18px;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
+  animation: heart-rise 1.4s ease-out forwards;
 }
 @keyframes fp-fade {
   0%   { opacity: 0.45; }
