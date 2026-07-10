@@ -352,6 +352,9 @@ const state = {
   // particle/atmos timers
   lastFootprintX: 0, lastFootprintY: 0, footprintSide: 0,
   lastZT: 0, lastHeartT: 0,
+  // dreaming while asleep: occasional dream bubble / leg twitch
+  lastDreamT: 0,
+  dreamTwitch: null,             // { t0, dur } when a sleep-twitch is animating
   // laser trail
   laserTrail: [],
   // bird / butterfly fly-by
@@ -651,6 +654,10 @@ function selectFace(now) {
       case "sneeze":        eyes = "happy"; break;
       case "fold_paws":     eyes = "happy"; break;
       case "sideways":      eyes = "happy"; break;
+      case "knead":         eyes = "happy"; break;
+      case "lick":          eyes = "happy"; mouth = "tongue"; break;
+      case "burp":          eyes = "happy"; mouth = "shy"; break;
+      case "belly_up":      eyes = "happy"; break;
     }
   }
 
@@ -756,16 +763,30 @@ function scheduleJump(now) {
   spawnDust(state.x + CAT_W / 2, state.y + CAT_H - 2);
 }
 
-function startIdle(now, longer = false) {
+// species-flavored bubble shown right as an idle sub-action kicks off
+const IDLE_START_BUBBLE = {
+  knead:    { cat: "咕噜咕噜~", pig: "哼噜噜~", bear: "呼噜~" },
+  belly_up: { cat: "摸摸我~",   pig: "哼~ 摸摸~", bear: "嗷~ 摸摸~" },
+};
+
+function startIdle(now, longer = false, forceAction = null) {
   state.mode = "idle";
-  // pick weighted action; nap/groom heavier when user is afk
-  const afk = state.cursorMoveAmt < 40;
-  const pool = afk
-    ? ["stretch", "sit", "yawn", "yawn", "look", "tail_curl", "loaf", "stare", "shake",
-       "fold_paws", "sideways", "sniff_air"]
-    : ["sit", "yawn", "stretch", "look", "tail_curl", "shake", "rollover", "loaf", "stare", "wiggle",
-       "itch", "sniff_air", "sniff_ground", "fold_paws", "sideways", "sneeze"];
-  const choice = pick(pool);
+  let choice;
+  if (forceAction) {
+    choice = forceAction;
+  } else {
+    // pick weighted action; nap/groom heavier when user is afk
+    const afk = state.cursorMoveAmt < 40;
+    const pool = afk
+      ? ["stretch", "sit", "yawn", "yawn", "look", "tail_curl", "loaf", "stare", "shake",
+         "fold_paws", "sideways", "sniff_air"]
+      : ["sit", "yawn", "stretch", "look", "tail_curl", "shake", "rollover", "loaf", "stare", "wiggle",
+         "itch", "sniff_air", "sniff_ground", "fold_paws", "sideways", "sneeze"];
+    // happy-mood-only sub-actions — only offered while not AFK
+    if (!afk && state.mood > 65) { pool.push("knead"); pool.push("knead"); }
+    if (!afk && state.mood >= 40) { pool.push("belly_up"); }
+    choice = pick(pool);
+  }
   state.idleAction = choice;
   state.idleActionT0 = now;
   state.lookFlipped = false;
@@ -788,11 +809,20 @@ function startIdle(now, longer = false) {
     sneeze: 700,
     fold_paws: rand(2200, 3800),
     sideways: rand(3500, 5500),
+    knead: rand(2500, 4000),
+    lick: 1400,
+    burp: 800,
+    belly_up: 3500,
   };
   let d = durs[choice] || 2000;
   if (longer) d *= 1.5;
   state.modeUntil = now + d;
   if (choice === "yawn") triggerYawn(800);
+  const startBubble = IDLE_START_BUBBLE[choice];
+  if (startBubble) {
+    const dur = choice === "knead" ? 1800 : 1500;
+    showBubble(startBubble[state.species] || startBubble.cat, dur);
+  }
 }
 
 function startSleeping(now) {
@@ -803,6 +833,7 @@ function startSleeping(now) {
   state.jump = null;
   state.turn = null;
   state.tailWag = null;
+  state.dreamTwitch = null;
   showBubble(pick(SLEEPY), 2200);
 }
 
@@ -1306,6 +1337,22 @@ function tick(now) {
     spawnHeart(state.x + CAT_W / 2 + rand(-18, 18), state.y + 30);
   }
 
+  // ---- dreaming: occasional dream bubble / leg twitch while asleep ----
+  if ((state.mode === "sleeping" || state.mode === "in_bed")
+      && now - state.lastDreamT > rand(8000, 16000)) {
+    state.lastDreamT = now;
+    const r = Math.random();
+    if (r < 0.60) {
+      const food = SPECIES_FOOD[state.species] || SPECIES_FOOD.cat;
+      const hx = state.x + CAT_W / 2 + rand(-6, 6);
+      const hy = state.y - 4;
+      _spawnParticle("dream", hx, hy, `<div class="dream-bubble">${food.emoji}</div>`, 2600);
+    } else if (r < 0.85 && state.mode === "sleeping") {
+      // in_bed hides the legs, so the twitch only makes sense while sleeping on the floor
+      state.dreamTwitch = { t0: now, dur: 450 };
+    }
+  }
+
   // ---- global feed/toy expiry (independent of mode, so tricks can't strand them) ----
   if (state.feed && now > state.feed.expireT) {
     feedEl.classList.add("hidden");
@@ -1324,12 +1371,21 @@ function tick(now) {
 
   // ---- pet detection: held > 500ms without moving > 8px ----
   if (state.press && !state.press.drag && !state.press.pet && now - state.press.t0 > 500) {
+    // caught mid belly-up ask? extra-happy reaction before we overwrite the mode below
+    const caughtBellyUp = state.mode === "idle" && state.idleAction === "belly_up" && now < state.modeUntil;
     state.press.pet = true;
     state.mode = "pet";
     state.modeStartT = now;
     state.jump = null; state.turn = null; state.chase = null;
     showBubble("咕噜咕噜~", 10000);   // long; cleared on mouseup
     triggerTailWag(now, 22, 4, 5000);
+    if (caughtBellyUp) {
+      bumpMood(12);
+      const hx = state.x + CAT_W / 2, hy = state.y + 30;
+      for (let i = 0; i < 4; i++) {
+        setTimeout(() => spawnHeart(hx + rand(-18, 18), hy), i * 120);
+      }
+    }
   }
 
   // ---- ambient self-talk: occasionally mutters in its own voice ----
@@ -1553,6 +1609,23 @@ function tick(now) {
           state.modeUntil = now + 6000;
         }
         triggerTailWag(now, 34, 9, 1600);
+      } else if (state.idleAction === "belly_up") {
+        // nobody came to rub the belly — flip back over and wander off
+        showBubble("哼", 800);
+        pickNewTarget();
+        startWalkLeg(now, false);
+      } else if (state.idleAction === "lick") {
+        // small chance of a post-meal hiccup before moving on
+        if (Math.random() < 0.3) {
+          showBubble("嗝~", 900);
+          startIdle(now, false, "burp");
+        } else {
+          pickNewTarget();
+          startWalkLeg(now, false);
+        }
+      } else if (state.idleAction === "burp") {
+        pickNewTarget();
+        startWalkLeg(now, false);
       } else if (!maybeSleep(now)) {
         const r = Math.random();
         if (r < 0.15) {
@@ -1605,7 +1678,8 @@ function tick(now) {
           for (let i = 0; i < food.heartParticles; i++) {
             setTimeout(() => spawnHeart(headX + rand(-18, 18), headY), i * 120);
           }
-          state.mode = "walking"; pickNewTarget(); startWalkLeg(now, false);
+          // lick lips for a moment before wandering off again
+          startIdle(now, false, "lick");
         }
       } else {
         const sp = BASE_SPEED_RUN * speciesSpeed();
@@ -2098,6 +2172,38 @@ function tick(now) {
         tailSwing = -16;
         break;
       }
+      case "knead": {
+        // alternating front-paw kneading, ~2Hz, out of phase
+        const phase = (now / 1000) * 2 * Math.PI * 2;
+        legFLY = Math.sin(phase) * 2.5;
+        legFRY = Math.sin(phase + Math.PI) * 2.5;
+        bodyTilt = 4 * state.facing;   // lean in slightly while kneading
+        bodyBob = Math.sin(now / 300) * 1.0;
+        break;
+      }
+      case "lick": {
+        // head sways gently while cleaning up
+        bodyTilt = Math.sin(now / 260) * 6;
+        bodyBob = Math.sin(now / 500) * 0.6;
+        break;
+      }
+      case "burp": {
+        const t = clamp((now - state.idleActionT0) / 300, 0, 1);
+        bodyScaleX = 1 + Math.sin(t * Math.PI) * 0.05;
+        bodyScaleY = 1 - Math.sin(t * Math.PI) * 0.03;
+        break;
+      }
+      case "belly_up": {
+        // flip onto the back and hold the pose, paws wiggling in the air
+        const t = clamp((now - state.idleActionT0) / 400, 0, 1);
+        const flip = smoothstep(t) * 74;
+        bodyTilt = flip * state.facing;
+        bodyScaleY = 0.88 - smoothstep(t) * 0.10;
+        legFLY = 2 + Math.sin(now / 90) * 3;
+        legFRY = 3 + Math.sin(now / 90 + Math.PI) * 3;
+        tailSwing = Math.sin(now / 450) * 8;
+        break;
+      }
     }
   }
 
@@ -2108,6 +2214,18 @@ function tick(now) {
     bodyBob = Math.sin(now / 1000) * 1.4;   // slow breathing
     tailSwing = Math.sin(now / 1800) * 4;
     legFLY = 0; legFRY = 0;
+    // dream twitch: a short decaying kick overlaid on the resting legs
+    if (state.dreamTwitch) {
+      const twT = (now - state.dreamTwitch.t0) / state.dreamTwitch.dur;
+      if (twT >= 1) {
+        state.dreamTwitch = null;
+      } else {
+        const decay = Math.sin(twT * Math.PI);
+        const pulse = Math.sin(twT * Math.PI * 4) * decay * 10;
+        legFLY += pulse;
+        legFRY += pulse * 0.6;
+      }
+    }
     mouthScaleY = 1;
     mouthOpenOpacity = 0;
     // occasional Zzz bubble
@@ -2584,12 +2702,18 @@ window.addEventListener("DOMContentLoaded", () => {
       }
     } else if (press.pet) {
       // end pet
-      state.mode = "walking";
-      pickNewTarget();
-      startWalkLeg(now, false);
       bubbleEl.classList.add("hidden");
       triggerTailWag(now, 26, 5, 1000);
       bumpMood(12);
+      const petDur = now - press.t0;
+      if (petDur >= 2000 && Math.random() < 0.5) {
+        // long satisfying pet → knead the air for a bit before moving on
+        startIdle(now, false, "knead");
+      } else {
+        state.mode = "walking";
+        pickNewTarget();
+        startWalkLeg(now, false);
+      }
     } else if (press.fromInBed) {
       // short tap on bed-cat → wake her up
       wakeFromBed(now);

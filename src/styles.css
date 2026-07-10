@@ -600,6 +600,20 @@ html, body {
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
   animation: heart-rise 1.6s ease-out forwards;
 }
+.particle.dream {
+  animation: dream-float 2.6s ease-out forwards;
+}
+.dream-bubble {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.88);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.14);
+  font-size: 14px;
+}
 @keyframes fp-fade {
   0%   { opacity: 0.45; }
   100% { opacity: 0; }
@@ -617,6 +631,12 @@ html, body {
   0%   { opacity: 0; transform: translate(-50%, 0)     scale(0.4); }
   20%  { opacity: 1; transform: translate(-50%, -10px) scale(1); }
   100% { opacity: 0; transform: translate(calc(-50% + 8px), -52px) scale(1.4) rotate(-18deg); }
+}
+@keyframes dream-float {
+  0%   { opacity: 0; transform: translate(-50%, 0)      scale(0.5); }
+  20%  { opacity: 1; transform: translate(-50%, -10px)  scale(1); }
+  70%  { opacity: 1; transform: translate(-50%, -34px)  scale(1.05); }
+  100% { opacity: 0; transform: translate(-50%, -50px)  scale(1.1); }
 }
 
 /* ===== Bird / butterfly fly-by ===== */
