@@ -2854,6 +2854,15 @@ window.addEventListener("DOMContentLoaded", () => {
       }
     } else if (act === "toy-cancel") {
       cancelToy(performance.now());
+    } else if (act === "debug-idle" || act === "debug-trick") {
+      const action = item.dataset.action;
+      const now = performance.now();
+      // debug: force-play the requested action from any state
+      if (state.mode === "sleeping") wakeUp(now);
+      if (state.mode === "in_bed") wakeFromBed(now);
+      state.chase = null; state.jump = null; state.turn = null;
+      if (act === "debug-idle") startIdle(now, false, action);
+      else                      startTrick(now, action);
     } else if (act === "quit") {
       invoke("quit_app").catch(() => {});
     }

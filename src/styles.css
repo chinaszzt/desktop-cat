@@ -427,6 +427,20 @@ html, body {
   padding-left: 14px;
 }
 
+/* Debug submenu: 29 rows — cap the height and scroll.
+   The edge-flip logic in main.js only swaps left/right + the gap padding,
+   so an internal max-height + overflow doesn't disturb it. */
+.ctx-submenu-debug {
+  max-height: 320px;
+  overflow-y: auto;
+}
+.ctx-submenu-debug::-webkit-scrollbar { width: 5px; }
+.ctx-submenu-debug::-webkit-scrollbar-track { background: transparent; }
+.ctx-submenu-debug::-webkit-scrollbar-thumb {
+  background: rgba(184, 144, 112, 0.4);
+  border-radius: 3px;
+}
+
 /* Cute status panel at top of context menu */
 .ctx-info {
   padding: 12px 14px 10px;
