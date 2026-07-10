@@ -355,6 +355,8 @@ const state = {
   // dreaming while asleep: occasional dream bubble / leg twitch
   lastDreamT: 0,
   dreamTwitch: null,             // { t0, dur } when a sleep-twitch is animating
+  // mud splatter throttle during the pig's mud_roll idle action
+  lastMudT: 0,
   // laser trail
   laserTrail: [],
   // bird / butterfly fly-by
@@ -586,6 +588,7 @@ function spawnZ(x, y) {
   _spawnParticle("zzz", x, y, c, 2300);
 }
 function spawnHeart(x, y) { _spawnParticle("heart", x, y, "❤", 1700); }
+function spawnMud(x, y)   { _spawnParticle("mud",   x, y, "",  700); }
 
 // adjust mood, clamped
 function bumpMood(delta) {
@@ -658,6 +661,10 @@ function selectFace(now) {
       case "lick":          eyes = "happy"; mouth = "tongue"; break;
       case "burp":          eyes = "happy"; mouth = "shy"; break;
       case "belly_up":      eyes = "happy"; break;
+      case "tail_chase":    eyes = (now - state.idleActionT0 < 2200) ? "wide" : "x"; break;
+      case "groom":         eyes = "happy"; break;
+      case "mud_roll":      eyes = "happy"; break;
+      case "back_scratch":  eyes = "happy"; mouth = "smile"; break;
     }
   }
 
@@ -765,8 +772,11 @@ function scheduleJump(now) {
 
 // species-flavored bubble shown right as an idle sub-action kicks off
 const IDLE_START_BUBBLE = {
-  knead:    { cat: "咕噜咕噜~", pig: "哼噜噜~", bear: "呼噜~" },
-  belly_up: { cat: "摸摸我~",   pig: "哼~ 摸摸~", bear: "嗷~ 摸摸~" },
+  knead:        { cat: "咕噜咕噜~", pig: "哼噜噜~", bear: "呼噜~" },
+  belly_up:     { cat: "摸摸我~",   pig: "哼~ 摸摸~", bear: "嗷~ 摸摸~" },
+  groom:        { cat: "舔舔~",     pig: "蹭蹭~",   bear: "抹抹~" },
+  mud_roll:     { cat: "哼噜~ 舒服!", pig: "哼噜~ 舒服!", bear: "哼噜~ 舒服!" },
+  back_scratch: { cat: "嗷~ 舒服~", pig: "嗷~ 舒服~", bear: "嗷~ 舒服~" },
 };
 
 function startIdle(now, longer = false, forceAction = null) {
@@ -779,12 +789,19 @@ function startIdle(now, longer = false, forceAction = null) {
     const afk = state.cursorMoveAmt < 40;
     const pool = afk
       ? ["stretch", "sit", "yawn", "yawn", "look", "tail_curl", "loaf", "stare", "shake",
-         "fold_paws", "sideways", "sniff_air"]
+         "fold_paws", "sideways", "sniff_air", "groom"]
       : ["sit", "yawn", "stretch", "look", "tail_curl", "shake", "rollover", "loaf", "stare", "wiggle",
-         "itch", "sniff_air", "sniff_ground", "fold_paws", "sideways", "sneeze"];
+         "itch", "sniff_air", "sniff_ground", "fold_paws", "sideways", "sneeze", "groom"];
     // happy-mood-only sub-actions — only offered while not AFK
     if (!afk && state.mood > 65) { pool.push("knead"); pool.push("knead"); }
     if (!afk && state.mood >= 40) { pool.push("belly_up"); }
+    if (!afk && state.mood > 50) { pool.push("tail_chase"); }
+    // species-flavored specials
+    if (!afk && state.species === "pig") { pool.push("mud_roll"); }
+    if (!afk && state.species === "bear") {
+      const bb = bounds();
+      if (state.x - bb.minX < 100 || bb.maxX - state.x < 100) pool.push("back_scratch");
+    }
     choice = pick(pool);
   }
   state.idleAction = choice;
@@ -813,11 +830,20 @@ function startIdle(now, longer = false, forceAction = null) {
     lick: 1400,
     burp: 800,
     belly_up: 3500,
+    tail_chase: 2800,
+    groom: rand(1800, 2600),
+    mud_roll: 3200,
+    back_scratch: rand(2800, 4000),
   };
   let d = durs[choice] || 2000;
   if (longer) d *= 1.5;
   state.modeUntil = now + d;
   if (choice === "yawn") triggerYawn(800);
+  if (choice === "back_scratch") {
+    // back against the nearest side wall → face inward, away from the edge
+    const bb = bounds();
+    state.facing = (state.x - bb.minX < bb.maxX - state.x) ? 1 : -1;
+  }
   const startBubble = IDLE_START_BUBBLE[choice];
   if (startBubble) {
     const dur = choice === "knead" ? 1800 : 1500;
@@ -1570,7 +1596,9 @@ function tick(now) {
         const remaining = tdist / baseDist;
         const easing = 0.4 + 0.6 * smoothstep(1 - Math.abs(remaining - 0.5) * 2); // peak at mid
         const zoomBoost = state.zoom ? 1.45 : 1.0;
-        const sp = (state.gait === "run" ? BASE_SPEED_RUN : BASE_SPEED_WALK) * easing * zoomBoost * speciesSpeed();
+        // low mood drags the paws — walk gait only, never touches run/zoom
+        const moodK = (state.gait === "walk" && state.mood < 30) ? 0.85 : 1.0;
+        const sp = (state.gait === "run" ? BASE_SPEED_RUN : BASE_SPEED_WALK) * easing * zoomBoost * moodK * speciesSpeed();
         state.x += (tdx / tdist) * sp * dt;
         state.y += (tdy / tdist) * sp * dt;
         moving = true;
@@ -2021,7 +2049,10 @@ function tick(now) {
   let mouthScaleY = 1, mouthOpenOpacity = 0;
 
   if (moving) {
-    const stepHz = state.gait === "run" ? 90 : 140;
+    // mood colors the walking gait: happy = bouncy skip, gloomy = drooping trudge
+    const moodHappy = state.mode === "walking" && state.gait === "walk" && state.mood > 75;
+    const moodLow   = state.mode === "walking" && state.gait === "walk" && state.mood < 30;
+    const stepHz = state.gait === "run" ? 90 : (moodHappy ? 118 : 140);
     const phase = (now / stepHz) % (Math.PI * 2);
     const intensity = state.gait === "run" ? 1.5 : 1.0;
     bodyBob   = Math.sin(phase * 2) * 1.8 * intensity;
@@ -2029,6 +2060,13 @@ function tick(now) {
     tailSwing = Math.sin(phase) * (state.gait === "run" ? 22 : 14);
     legFLY    = -Math.max(0, Math.sin(phase)) * 3 * intensity;
     legFRY    = -Math.max(0, Math.sin(phase + Math.PI)) * 3 * intensity;
+    if (moodHappy) {
+      bodyBob *= 1.6;
+      tailSwing += 6;          // tail carried high
+    } else if (moodLow) {
+      bodyBob *= 0.5;
+      bodyTilt += 2.5 * state.facing;   // head hangs forward
+    }
   } else {
     const phase = (now / 600) % (Math.PI * 2);
     bodyBob   = Math.sin(phase) * 0.5;
@@ -2202,6 +2240,75 @@ function tick(now) {
         legFLY = 2 + Math.sin(now / 90) * 3;
         legFRY = 3 + Math.sin(now / 90 + Math.PI) * 3;
         tailSwing = Math.sin(now / 450) * 8;
+        break;
+      }
+      case "tail_chase": {
+        const tt = now - state.idleActionT0;
+        if (tt < 600) {
+          // spot the tail — twist toward it
+          bodyTilt = smoothstep(tt / 600) * 10 * state.facing;
+          bodyScaleY = 0.97;
+          tailSwing = Math.sin(now / 130) * 16;
+        } else if (tt < 2200) {
+          // two full spins in place (raw rotation — see isSpinning below)
+          const k = (tt - 600) / 1600;
+          bodyTilt = (10 + k * 720) * state.facing;
+          bodyBob = Math.sin(now / 90) * 1.5;
+          tailSwing = Math.sin(now / 70) * 30;
+          legFLY = Math.sin(now / 100) * 2;
+          legFRY = -Math.sin(now / 100) * 2;
+        } else {
+          // dizzy stop — settle to upright with a decaying overshoot wobble
+          // fold accumulated turns first so the lerp doesn't unwind 2 spins
+          state.disp.bodyTilt = ((state.disp.bodyTilt % 360) + 540) % 360 - 180;
+          const k = clamp((tt - 2200) / 600, 0, 1);
+          bodyTilt = Math.sin(k * Math.PI * 3) * (1 - k) * 12 * state.facing;
+          bodyBob = Math.sin(now / 120) * 1.0 * (1 - k);
+        }
+        break;
+      }
+      case "groom": {
+        // forward paw lifts to rub the face at ~1.5Hz, head bobs along
+        const phase = (now / 1000) * 1.5 * Math.PI * 2;
+        const lift = -Math.max(0, Math.sin(phase)) * 4.5;   // negative = raised (same as walk gait)
+        if (state.facing > 0) legFRY = lift;
+        else                  legFLY = lift;
+        bodyTilt = 3 * state.facing + Math.sin(phase) * 1.5;
+        bodyBob = Math.sin(phase) * 1.0;
+        tailSwing = Math.sin(now / 800) * 8;
+        break;
+      }
+      case "mud_roll": {
+        const tt = now - state.idleActionT0;
+        if (tt < 2000) {
+          // full-circle wallow (raw rotation — see isSpinning below)
+          bodyTilt = (tt / 2000) * 360 * state.facing;
+          bodyScaleY = 0.94;
+          bodyBob = Math.sin(now / 150) * 1.5;
+          if (now - state.lastMudT > 300) {
+            state.lastMudT = now;
+            spawnMud(state.x + CAT_W / 2 - rand(20, 42), state.y + CAT_H - rand(8, 30));
+            spawnMud(state.x + CAT_W / 2 + rand(20, 42), state.y + CAT_H - rand(8, 30));
+          }
+        } else {
+          // shake the mud off (same trick as the "shake" idle)
+          state.disp.bodyTilt = ((state.disp.bodyTilt % 360) + 540) % 360 - 180;
+          const k = clamp((tt - 2000) / 1200, 0, 1);
+          bodyTilt = Math.sin(now / 32) * 5 * (1 - k);
+          legFLY = Math.sin(now / 26) * 2.5 * (1 - k);
+          legFRY = -Math.sin(now / 26) * 2.5 * (1 - k);
+          tailSwing = Math.sin(now / 38) * 28 * (1 - k);
+          bodyScaleY = 0.95;
+        }
+        break;
+      }
+      case "back_scratch": {
+        // back against the wall, stand tall and rub up and down
+        bodyScaleY = 1.08;
+        bodyScaleX = 0.94;
+        bodyBob = Math.sin((now / 1000) * 2.5 * Math.PI * 2) * 3.5;
+        legFLY = 0; legFRY = 0;
+        tailSwing = Math.sin(now / 500) * 6;
         break;
       }
     }
@@ -2531,9 +2638,12 @@ function tick(now) {
 
   // ----- low-pass smoothing — kills mode-switch pops -----
   // spin / chase_tail need raw bodyTilt or rotation lags
+  const idleAge = now - state.idleActionT0;
   const isSpinning =
     (state.mode === "trick" && state.trickAction === "spin")
-    || (state.mode === "chasing" && state.chase && state.chase.variant === "chase_tail");
+    || (state.mode === "chasing" && state.chase && state.chase.variant === "chase_tail")
+    || (state.mode === "idle" && state.idleAction === "tail_chase" && idleAge >= 600 && idleAge < 2200)
+    || (state.mode === "idle" && state.idleAction === "mud_roll" && idleAge < 2000);
   if (isSpinning) state.disp.bodyTilt = bodyTilt;
   else            lerpDisp("bodyTilt", bodyTilt, dt, 70);
   lerpDisp("bodyScaleX", bodyScaleX, dt, 70);
