@@ -3219,28 +3219,6 @@ window.addEventListener("DOMContentLoaded", () => {
       }
     } else if (act === "toy-cancel") {
       cancelToy(performance.now());
-    } else if (act === "debug-idle" || act === "debug-trick") {
-      const action = item.dataset.action;
-      const now = performance.now();
-      // debug: force-play the requested action from any state
-      if (state.mode === "sleeping") wakeUp(now);
-      if (state.mode === "in_bed") wakeFromBed(now);
-      state.chase = null; state.jump = null; state.turn = null;
-      if (act === "debug-idle") startIdle(now, false, action);
-      else                      startTrick(now, action);
-    } else if (act === "debug-event") {
-      const ev = item.dataset.action;
-      const now = performance.now();
-      if (state.mode === "sleeping") wakeUp(now);
-      if (state.mode === "in_bed") wakeFromBed(now);
-      if (ev === "gift") {
-        hideGift();                 // clear any in-flight gift, then force a fresh run
-        state.lastGiftT = 0;        // debug bypasses the cooldown
-        startGifting(now);
-      } else if (ev === "butterfly") {
-        if (state.bird) { birdEl.classList.add("hidden"); state.bird = null; }
-        spawnNoseButterfly(now);
-      }
     } else if (act === "quit") {
       invoke("quit_app").catch(() => {});
     }
