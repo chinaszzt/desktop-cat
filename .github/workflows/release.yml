@@ -1,0 +1,64 @@
+name: Release
+
+# Cut a release by pushing a version tag, e.g.:
+#   git tag v0.1.0 && git push origin v0.1.0
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest'
+            args: '--target universal-apple-darwin'
+          - platform: 'windows-latest'
+            args: ''
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      # Builds the bundles and attaches them to (or creates) the GitHub Release
+      # for this tag: macOS universal .dmg, Windows .msi + NSIS setup .exe
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Cat Desk Pet ${{ github.ref_name }}'
+          releaseBody: |
+            🐾 桌面宠物 Cat Desk Pet ${{ github.ref_name }}
+
+            **下载**
+            - macOS：`.dmg` — 通用包，Intel 和 Apple Silicon 都能跑
+            - Windows 安装版：`-setup.exe`（NSIS）或 `.msi`
+            - Windows 免安装版：`cat-desk-pet.exe` — 单文件，双击即用，无需安装
+
+            首次打开系统会因未签名拦截：macOS 右键 .app → 打开；Windows SmartScreen → More info → Run anyway。
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
+
+      # Also attach the raw single-file portable exe (frontend is embedded at
+      # compile time, so this one .exe runs standalone — no install step).
+      - name: Attach portable Windows exe
+        if: matrix.platform == 'windows-latest'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ github.ref_name }} src-tauri/target/release/cat-desk-pet.exe --clobber

@@ -1,124 +1,152 @@
-# CatDeskPet
+<div align="center">
 
-一只在桌面上活蹦乱跳的小猫。Tauri 2 + 纯 SVG 手绘，~10 MB 桌面宠物，macOS / Windows 都能跑。
+![Cat Desk Pet](docs/banner.png)
 
-## 功能
+# 🐾 Cat Desk Pet
 
-- **5 套毛色**：橘 / 三花 / 奶牛 / 灰虎斑 / 黑白（右键菜单切换）
-- **困倦度系统**：醒着会累，累到自己睡，睡到 0 自然醒，点击可叫醒
-- **多 gait**：walk / run / 跳跃 / 微停；缓动加减速
-- **狩猎模式**：随机 dash / leap 连跳 / 伸爪 swat / leap-swat 组合
-- **闲置动作**：蹲坐 / 哈欠 / 伸懒腰 / 张望 / 卷尾 / 抖毛 / 翻肚 / 面包猫 / 凝视 / 翘屁股
-- **眼神追踪**：眼珠在小范围自由跟随鼠标
-- **3D 感转身**：跳一下落地变向，不是 2D 翻面
-- **鼠标交互**：
-  - 单击 → 喵 / 爱心 / 转圈 / 扑 / 蹦跶（随机）
-  - 长按 0.5s → 抚摸模式（咕噜咕噜~）
-  - 拖动 → 抓着走，松手晕一下
-  - 双击 → 投喂 🐟（吃完困倦度大幅下降）
-  - 鼠标附近快速划圈 → 触发转圈
-- **环境感知**：
-  - 鼠标远端快速移动 → 猫停下盯着看
-  - 鼠标 90 秒无大动作 → 走过来撒娇 ❤
-  - 22:00–06:00 困得更快（×2）
-  - 屏幕边缘偶发抓墙
-- **彩蛋**：
-  - 每 3–6 分钟概率性生成毛线球，猫追着拍
-  - 节日自动戴帽：圣诞 / 万圣 / 新年 / 情人节
-  - 右键 → 拍照模式（茄子~ 📸 全屏白闪）
+**一只住在你桌面上的手绘小动物。**
+它会自己溜达、犯困、打哈欠、追自己的尾巴，偶尔还叼一片叶子跑来送你。
+不打扰工作，只在你需要摸鱼的时候，给你一点点治愈。
 
-## macOS 安装（已编好的包）
+Tauri 2 · 纯手绘 SVG · 约 10 MB · macOS / Windows 通吃
 
-发布版从 [Releases](../../releases) 下载 `CatDeskPet_x.y.z_universal.dmg`，拖进 Applications。
+[⬇️ 下载即玩](#-下载即玩) · [🐱 认识它们](#-认识它们) · [✨ 它会做什么](#-它会做什么) · [🛠 从源码构建](#-从源码构建)
 
-首次打开 macOS 会拦截（未签名），右键 .app → 打开 → 仍然打开。或：
+</div>
 
-```bash
-xattr -dr com.apple.quarantine /Applications/CatDeskPet.app
-```
+---
 
-不上 Dock、不在 Cmd+Tab — 右键小猫弹菜单（换毛色 / 让她睡 / 拍照 / 丢玩具 / 退出）。
+## ⬇️ 下载即玩
 
-## Windows 编译
+去 **[Releases](../../releases)** 挑一个下载，双击就跑，不用装运行时、不用配环境：
 
-macOS 端无法交叉编译 Windows 包（Tauri 的 webview2 binding 限制）。需要在 Windows 机器上编：
+| 平台 | 下载文件 | 说明 |
+|---|---|---|
+| 🪟 Windows 免安装 | `cat-desk-pet.exe` | **单文件绿色版**，双击即用，不写注册表 |
+| 🪟 Windows 安装版 | `*-setup.exe` / `*.msi` | 常规安装包，带开始菜单快捷方式 |
+| 🍎 macOS | `*.dmg` | 通用包，Intel 和 Apple Silicon 都能跑 |
 
-### 一次性环境
+> 首次打开系统会因为"未签名"拦一下——这是正常的：
+> - **macOS**：右键 `.app` → 打开 → 仍然打开（或 `xattr -dr com.apple.quarantine /Applications/CatDeskPet.app`）
+> - **Windows**：SmartScreen 弹窗 → More info → Run anyway
 
-| 工具 | 来源 |
+小动物不会占用 Dock / 任务栏，也不抢 Cmd+Tab 焦点。**右键点它**就能换毛色、丢玩具、让它睡觉、拍照或退出。
+
+---
+
+## 🐱 认识它们
+
+三个物种、十种毛色，右键随时切换。每一只都是纯手绘 SVG，连表情都是一笔一笔画出来的。
+
+![全家福](docs/cast.png)
+
+| 物种 | 毛色 |
 |---|---|
-| Rust toolchain | https://win.rustup.rs (`rustup-init.exe`，全默认) |
-| VS Build Tools 2022 | https://visualstudio.microsoft.com/visual-cpp-build-tools/ — 安装时勾选 **Desktop development with C++** |
-| Node.js LTS | https://nodejs.org/ |
-| WebView2 Runtime | Win 11 自带；Win 10 装 [Evergreen Bootstrapper](https://developer.microsoft.com/microsoft-edge/webview2/) |
+| 🐈 **猫** | 橘猫 · 三花 · 奶牛 · 灰虎斑 · 黑白 |
+| 🐷 **猪** | 粉猪 · 奶白猪 |
+| 🐻 **熊** | 棕熊 · 黑熊 · 北极熊 |
+
+换物种不只是换个皮：叫声、爱吃的东西、走路速度、专属小动作都会跟着变。
+
+---
+
+## ✨ 它会做什么
+
+**自己过日子**
+在桌面上溜达、小跑、跳跃、微微停顿；累了会打哈欠、伸懒腰、洗脸、蹲成一只面包；困到不行就地睡着，还会做梦冒出小鱼干泡泡、腿一抽一抽的，睡饱了自然醒。
+
+**跟你互动**
+- 👆 **单击** → 随机喵一声 / 比心 / 转圈 / 扑腾
+- 💋 **快速双击** → 隔屏亲亲（慢一点双击是投喂 🐟）
+- ✋ **长按 0.5 秒** → 进入抚摸模式，咕噜咕噜～
+- 🖐 **拖动** → 拎着走，松手会晕乎乎
+- 👀 **眼神追踪** → 眼珠会在小范围里跟着你的鼠标转
+
+**有小脾气也有小心思**
+心情好了走路会变成小跳步、尾巴翘得高高；心情低落就蔫蔫地慢慢挪。它会追自己的尾巴追到晕头转向，会翻过来露肚皮求你摸，摸够了还会踩奶。冷不丁地，它可能叼一片叶子/小礼物跑到你鼠标边放下，骄傲地等你夸。偶尔一只蝴蝶飞来落在鼻尖上，它盯成斗鸡眼，最后打个喷嚏把蝴蝶吓跑。
+
+**物种专属**
+🐷 小猪会就地打个泥坑滚，然后抖干净一身泥；🐻 小熊走到屏幕边会背靠着上下蹭背，一脸陶醉。
+
+**还有这些**
+- 🧶 会随机蹦出玩具（毛线球 / 弹力球 / 纸团 / 假老鼠 / 激光笔 / 逗猫棒），追着拍
+- 🌙 夜里 22:00–06:00 更容易犯困
+- 🎉 节日自动戴帽（圣诞 / 万圣 / 新年 / 情人节）
+- 📸 右键「拍照模式」，全屏白闪，茄子～
+- 🔧 右键「调试」菜单，可以点名让它当场表演任意一个动作
+
+---
+
+<details>
+<summary><b>🛠 从源码构建</b>（点击展开技术细节）</summary>
+
+### 环境准备
+
+| 工具 | 说明 |
+|---|---|
+| [Rust](https://rustup.rs) | `rustup-init`，全默认即可 |
+| [Node.js LTS](https://nodejs.org) | 装前端依赖用 |
+| Xcode CLT (macOS) | `xcode-select --install` |
+| VS Build Tools 2022 (Windows) | 勾选 **Desktop development with C++** |
+| WebView2 (Windows) | Win11 自带；Win10 装 [Evergreen Bootstrapper](https://developer.microsoft.com/microsoft-edge/webview2/) |
 
 ### 编译
 
-```powershell
+```bash
 git clone https://github.com/chinaszzt/desktop-cat
 cd desktop-cat
 npm install
 npm run tauri build
 ```
 
-首编 5–10 分钟，之后增量编译 10 秒以内。
+产物在 `src-tauri/target/release/bundle/`（安装包）和 `src-tauri/target/release/cat-desk-pet(.exe)`（可直接运行的单文件二进制）。
 
-### 产物位置
-
-```
-src-tauri\target\release\bundle\msi\CatDeskPet_0.1.0_x64_en-US.msi   ← MSI 安装包
-src-tauri\target\release\bundle\nsis\CatDeskPet_0.1.0_x64-setup.exe  ← NSIS 安装
-src-tauri\target\release\cat-desk-pet.exe                            ← 直接能跑的 exe
-```
-
-双击 .msi 或 setup.exe 安装。未签名，Windows SmartScreen 会弹 "Windows protected your PC" → **More info → Run anyway**。
-
-## macOS 编译（自己出 dmg）
+macOS 想出同时兼容 Intel + Apple Silicon 的通用包：
 
 ```bash
-# 装 Rust（一次性）
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-# 装 Apple Silicon + Intel target（universal 用）
 rustup target add x86_64-apple-darwin aarch64-apple-darwin
-
-npm install
-
-# 单架构（当前机器）
-npm run tauri build
-
-# Universal binary（arm64 + x86_64 都能跑）
 npm run tauri build -- --target universal-apple-darwin
 ```
 
-> 注：Tauri 自带的 `bundle_dmg.sh` 在 universal 模式偶尔挂图标 AppleScript，那时 `.app` 已生成好，手动 hdiutil 重打：
->
-> ```bash
-> hdiutil create -volname "CatDeskPet" \
->   -srcfolder src-tauri/target/universal-apple-darwin/release/bundle/macos/CatDeskPet.app \
->   -ov -format UDZO ~/Desktop/CatDeskPet.dmg
-> ```
+> macOS 与 Windows **无法互相交叉编译**（Tauri 依赖各自系统的 WebView），跨平台产物请交给下面的 CI。
 
-## Dev 模式（边改边看）
+### 自动发布（推 tag → 出 Release）
+
+仓库配了 GitHub Actions，**打一个版本 tag 就会在云端同时编译 Windows 和 macOS，把安装包 + 单文件 exe + 通用 dmg 自动发布到 Releases**：
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+- [`.github/workflows/release.yml`](.github/workflows/release.yml) — tag 触发，矩阵构建 mac(universal) + windows，产物传到 GitHub Release
+- [`.github/workflows/build-windows.yml`](.github/workflows/build-windows.yml) — 每次推 `main` 跑一遍 Windows 构建，产物作为 Actions artifact，方便快速验证
+
+### Dev 模式（边改边看）
 
 ```bash
 npm run tauri dev
 ```
 
-启动实时窗口。前端文件改了之后杀进程重启（Tauri 默认只 watch `src-tauri/`）。
+前端文件（`src/`）改动后需杀进程重启——Tauri 默认只 watch `src-tauri/`。
 
-## 项目结构
+### 项目结构
 
 ```
-src/                     前端（HTML + CSS + vanilla JS）
-  index.html             DOM 骨架（cat / 右键菜单 / 玩具 / 鱼 / 闪光）
-  main.js                小猫 SVG + 行为状态机 + 动画循环
-  styles.css             毛色 / 气泡 / 菜单样式
-src-tauri/               Rust 端
-  src/lib.rs             窗口配置 + 系统托盘 + 鼠标位置轮询
-  tauri.conf.json        窗口属性（透明 / 置顶 / Accessory）
-  capabilities/          权限声明
+src/                前端（纯 HTML + CSS + vanilla JS，无框架）
+  index.html          DOM 骨架：宠物 / 右键菜单 / 玩具 / 食物 / 窝
+  main.js             SVG 素材 + 行为状态机 + 每帧动画循环
+  styles.css          毛色变量 / 表情切换 / 气泡 / 菜单
+src-tauri/          Rust 端
+  src/lib.rs          窗口配置 / 系统托盘 / 鼠标位置轮询
+  tauri.conf.json     窗口属性（透明 / 置顶 / 无边框）
+docs/               README 用的展示图
+.github/workflows/  CI：构建与发布
 ```
+
+技术上就是一个透明、置顶的全屏 Tauri 窗口，里面用一套 `requestAnimationFrame` 驱动的状态机操控一只 SVG 小动物——所有动作、表情、物理都是手写插值，没有用任何动画库。
+
+</details>
 
 ## License
 
