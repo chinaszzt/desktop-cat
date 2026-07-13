@@ -77,8 +77,10 @@ Tauri 2 · 纯手绘 SVG · 约 10 MB · macOS / Windows 通吃
 
 ---
 
+## 🛠 从源码构建
+
 <details>
-<summary><b>🛠 从源码构建</b>（点击展开技术细节）</summary>
+<summary>点击展开完整的构建 / CI / 目录说明</summary>
 
 ### 环境准备
 
