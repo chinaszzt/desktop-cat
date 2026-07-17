@@ -12,6 +12,8 @@
 
 Tauri 2 · 纯手绘 SVG · 约 10 MB · macOS / Windows 通吃
 
+<img src="docs/act-knead.gif" width="260" alt="踩奶中的橘猫" />
+
 [⬇️ 下载即玩](#-下载即玩) · [🐱 认识它们](#-认识它们) · [✨ 它会做什么](#-它会做什么) · [🛠 从源码构建](#-从源码构建)
 
 </div>
@@ -55,6 +57,19 @@ Tauri 2 · 纯手绘 SVG · 约 10 MB · macOS / Windows 通吃
 ## ✨ 它会做什么
 
 一只小动物身上藏了这么多动作，很多得慢慢养、慢慢逗才见得到 —— 下面是它的全部"戏码"。
+
+<table align="center">
+  <tr>
+    <td align="center"><img width="190" src="docs/act-knead.gif" alt="踩奶" /><br /><b>踩奶</b></td>
+    <td align="center"><img width="190" src="docs/act-tail-chase.gif" alt="追尾巴" /><br /><b>追自己的尾巴</b></td>
+    <td align="center"><img width="190" src="docs/act-belly-up.gif" alt="翻肚皮" /><br /><b>翻肚皮求摸</b></td>
+  </tr>
+  <tr>
+    <td align="center"><img width="190" src="docs/act-heart.gif" alt="比心" /><br /><b>比心</b></td>
+    <td align="center"><img width="190" src="docs/act-mud-roll.gif" alt="泥坑打滚" /><br /><b>🐷 泥坑打滚</b></td>
+    <td align="center"><img width="190" src="docs/act-back-scratch.gif" alt="蹭背" /><br /><b>🐻 蹭背</b></td>
+  </tr>
+</table>
 
 **日常小动作**（它自己会演）
 坐下 · 打哈欠 · 伸懒腰 · 张望 · 卷尾巴 · 抖毛 · 翻滚 · 蹲成面包 · 发呆 · 摇屁股 · 挠痒 · 闻空气 · 嗅地面 · 打喷嚏 · 收爪蹲 · 侧躺 · 洗脸 · 踩奶 · 追自己的尾巴 · 翻肚皮求摸

@@ -12,6 +12,8 @@ It won't get in the way of your work. It's just here for the moments when you ne
 
 Tauri 2 · hand-drawn SVG · ~10 MB · macOS / Windows
 
+<img src="docs/act-knead.gif" width="260" alt="An orange cat kneading" />
+
 [⬇️ Download & Play](#-download--play) · [🐱 Meet Them](#-meet-them) · [✨ What It Does](#-what-it-does) · [🛠 Build from Source](#-build-from-source)
 
 </div>
@@ -55,6 +57,19 @@ Switching species is more than a reskin: the sounds, the favorite food, the walk
 ## ✨ What It Does
 
 There's a lot packed into one small animal — much of it only shows up once you've kept it around a while. Here's the full repertoire.
+
+<table align="center">
+  <tr>
+    <td align="center"><img width="190" src="docs/act-knead.gif" alt="Knead" /><br /><b>Knead</b></td>
+    <td align="center"><img width="190" src="docs/act-tail-chase.gif" alt="Chase its tail" /><br /><b>Chase its tail</b></td>
+    <td align="center"><img width="190" src="docs/act-belly-up.gif" alt="Belly up" /><br /><b>Roll belly-up</b></td>
+  </tr>
+  <tr>
+    <td align="center"><img width="190" src="docs/act-heart.gif" alt="Make a heart" /><br /><b>Make a heart</b></td>
+    <td align="center"><img width="190" src="docs/act-mud-roll.gif" alt="Mud roll" /><br /><b>🐷 Mud roll</b></td>
+    <td align="center"><img width="190" src="docs/act-back-scratch.gif" alt="Back scratch" /><br /><b>🐻 Back scratch</b></td>
+  </tr>
+</table>
 
 **Everyday moves** (it does these on its own)
 Sit · Yawn · Stretch · Look around · Curl its tail · Shake · Roll over · Loaf · Stare into space · Wiggle · Scratch an itch · Sniff the air · Sniff the ground · Sneeze · Fold its paws · Lie on its side · Wash its face · Knead · Chase its own tail · Roll belly-up asking to be rubbed
