@@ -1,6 +1,10 @@
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
 
+// `t` is imported as `tr` — the codebase already uses `t` heavily as a local
+// (animation progress, the active toy), which would shadow the import.
+import { LANG, L, t as tr } from "./i18n.js";
+
 // debug overlay
 window.addEventListener("error", (e) => {
   const div = document.createElement("div");
@@ -207,45 +211,19 @@ const SPECIES_COLORS = {
 };
 const SPECIES_DEFAULT_COLOR = { cat: "orange", pig: "pink", bear: "brown" };
 const ALL_SPECIES = ["cat", "pig", "bear"];
+// eatBubble text comes from the active language pack (L.eat[species])
 const SPECIES_FOOD = {
-  cat:  { emoji: "🐟", eatBubble: "好饱~ 喵呜!",  moodGain: 15, heartParticles: 0 },
-  pig:  { emoji: "🥕", eatBubble: "哼噜~ 好吃!", moodGain: 20, heartParticles: 1 },
-  bear: { emoji: "🍯", eatBubble: "嗯~ 好甜~♡", moodGain: 28, heartParticles: 4 },
+  cat:  { emoji: "🐟", moodGain: 15, heartParticles: 0 },
+  pig:  { emoji: "🥕", moodGain: 20, heartParticles: 1 },
+  bear: { emoji: "🍯", moodGain: 28, heartParticles: 4 },
 };
 // pigs and bears amble slower than cats
 const SPECIES_SPEED = { cat: 1.0, pig: 0.78, bear: 0.72 };
 function speciesSpeed() { return SPECIES_SPEED[state.species] || 1; }
 
 const COLORS = [...SPECIES_COLORS.cat, ...SPECIES_COLORS.pig, ...SPECIES_COLORS.bear];
-const SPECIES_SOUNDS = {
-  cat: {
-    happy:   ["喵~", "喵♪", "咕噜咕噜~", "喵呼~", "喵♡"],
-    excited: ["喵!", "喵喵!", "嗷呜!", "喵呜!", "喵—!"],
-    curious: ["喵?", "嗯?", "...?", "喵嗯?", "唔?"],
-    sleepy:  ["唔...", "喵...", "...zzz", "嗯......"],
-    grumpy:  ["嘶!", "哼!", "fff...", "走开!"],
-    shy:     ["...", "唔...", "(///)", "嗯?"],
-    neutral: ["喵~", "喵喵~", "喵呜~", "咕噜咕噜..."],
-  },
-  pig: {
-    happy:   ["哼噜~", "呼噜~", "嘿嘿~", "哼♪"],
-    excited: ["哼!", "嘿嘿!", "嗯哼!"],
-    curious: ["哼?", "嗯?", "...?"],
-    sleepy:  ["呼...", "哼...", "..."],
-    grumpy:  ["哼!", "呼噜!", "走开!"],
-    shy:     ["...", "唔...", "(///)"],
-    neutral: ["哼噜~", "呼~", "嘿~"],
-  },
-  bear: {
-    happy:   ["嗷呜~", "嗯~", "呼噜~", "唔~"],
-    excited: ["嗷!", "吼!", "呜啊!"],
-    curious: ["嗷?", "嗯?", "...?"],
-    sleepy:  ["呼...", "嗯...", "ZZ..."],
-    grumpy:  ["吼!", "呼!", "嗷!"],
-    shy:     ["...", "唔...", "嗯..."],
-    neutral: ["嗷~", "嗯~", "呼~"],
-  },
-};
+// ambient mood pools, keyed by species — sourced from the active language pack
+const SPECIES_SOUNDS = L.sounds;
 function pickMeowByMood(now) {
   const pool = SPECIES_SOUNDS[state.species] || SPECIES_SOUNDS.cat;
   if (state.mode === "sleeping" || state.sleepiness > 75) return pick(pool.sleepy);
@@ -736,13 +714,8 @@ function scheduleJump(now) {
 }
 
 // species-flavored bubble shown right as an idle sub-action kicks off
-const IDLE_START_BUBBLE = {
-  knead:        { cat: "咕噜咕噜~", pig: "哼噜噜~", bear: "呼噜~" },
-  belly_up:     { cat: "摸摸我~",   pig: "哼~ 摸摸~", bear: "嗷~ 摸摸~" },
-  groom:        { cat: "舔舔~",     pig: "蹭蹭~",   bear: "抹抹~" },
-  mud_roll:     { cat: "哼噜~ 舒服!", pig: "哼噜~ 舒服!", bear: "哼噜~ 舒服!" },
-  back_scratch: { cat: "嗷~ 舒服~", pig: "嗷~ 舒服~", bear: "嗷~ 舒服~" },
-};
+// (sourced from the active language pack)
+const IDLE_START_BUBBLE = L.idleStart;
 
 function startIdle(now, longer = false, forceAction = null) {
   state.mode = "idle";
@@ -1314,7 +1287,7 @@ function takePhoto(now) {
     flashEl.classList.add("shoot");
     setTimeout(() => flashEl.classList.remove("shoot"), 500);
   }, 600);
-  showBubble("茄子~ 📸", 1300);
+  showBubble(tr("say.photo"), 1300);
 }
 
 function detectCircle(now) {
@@ -1356,9 +1329,9 @@ function startTrick(now, action) {
   if (action === "kiss") state.kissShown = false;   // mid-animation 💋 fires once
   if (action === "meow")   { showBubble(pickMeowByMood(now), 1300); triggerBlink(); }
   if (action === "heart")  { showBubble(pick(HEARTS), 1500); triggerBlink(); }
-  if (action === "grumpy") { showBubble(pick(["嘶!", "哼!", "走开!", "別碰!"]), 1200); }
-  if (action === "wave")   { showBubble(pick(["嗨~", "哟~", "Hi!"]), 1300); }
-  if (action === "shy")    { showBubble(pick(["...", "唔...", "(///∇///)"]), 1400); }
+  if (action === "grumpy") { showBubble(pick(tr("say.grumpy")), 1200); }
+  if (action === "wave")   { showBubble(pick(tr("say.wave")), 1300); }
+  if (action === "shy")    { showBubble(pick(tr("say.shy")), 1400); }
   if (action === "pounce" || action === "happy_jump") scheduleJump(now);
 }
 
@@ -1387,7 +1360,7 @@ function tick(now) {
       state.mode = "walking";
       pickNewTarget();
       startWalkLeg(now, false);
-      showBubble("睡饱啦~", 1500);
+      showBubble(tr("say.sleepWell"), 1500);
       triggerTailWag(now, 28, 6, 1200);
     }
   } else if (state.mode === "in_bed") {
@@ -1514,7 +1487,7 @@ function tick(now) {
     state.mode = "pet";
     state.modeStartT = now;
     state.jump = null; state.turn = null; state.chase = null;
-    showBubble("咕噜咕噜~", 10000);   // long; cleared on mouseup
+    showBubble(tr("say.purr"), 10000);   // long; cleared on mouseup
     triggerTailWag(now, 22, 4, 5000);
     if (caughtBellyUp || caughtGifting) {
       bumpMood(caughtBellyUp ? 12 : 10);
@@ -1766,13 +1739,13 @@ function tick(now) {
         triggerTailWag(now, 34, 9, 1600);
       } else if (state.idleAction === "belly_up") {
         // nobody came to rub the belly — flip back over and wander off
-        showBubble("哼", 800);
+        showBubble(tr("say.hmph"), 800);
         pickNewTarget();
         startWalkLeg(now, false);
       } else if (state.idleAction === "lick") {
         // small chance of a post-meal hiccup before moving on
         if (Math.random() < 0.3) {
-          showBubble("嗝~", 900);
+          showBubble(tr("say.burp"), 900);
           startIdle(now, false, "burp");
         } else {
           pickNewTarget();
@@ -1826,7 +1799,7 @@ function tick(now) {
           state.sleepiness = Math.max(0, state.sleepiness - 25);
           bumpMood(food.moodGain);
           triggerTailWag(now, 30, 7, 1800);
-          showBubble(food.eatBubble, 1500);
+          showBubble(L.eat[state.species] || L.eat.cat, 1500);
           // burst hearts for bears (honey love)
           const headX = state.x + CAT_W / 2;
           const headY = state.y + 30;
@@ -1913,10 +1886,7 @@ function tick(now) {
           if (t.target && t.hits >= t.target) {
             toyEl.classList.add("hidden");
             state.toy = null;
-            const msgs = {
-              yarn: "玩够了~", ball: "嘿!", paper: "...", mouse: "抓住啦!",
-            };
-            showBubble(msgs[t.type] || "玩够了~", 1200);
+            showBubble(L.say.toyDone[t.type] || L.say.toyDoneDefault, 1200);
             bumpMood(8);
             state.mode = "walking"; pickNewTarget(); startWalkLeg(now, false);
           }
@@ -2009,7 +1979,7 @@ function tick(now) {
         const dir = state.facing >= 0 ? 1 : -1;
         giftEl.style.left = (state.x + 60 + dir * 26) + "px";
         giftEl.style.top  = (state.y + 88) + "px";
-        showBubble("给你的~♡", 2000);
+        showBubble(tr("say.gift"), 2000);
         triggerTailWag(now, 26, 5, 1800);
         state.modeUntil = now + 2500;    // proud wait beside the gift
       } else {
@@ -2353,7 +2323,7 @@ function tick(now) {
           eyeScaleY = 0.08;
           if (!state.sneezeShown) {
             state.sneezeShown = true;
-            showBubble(pick(["啊嚏!", "atishoo!", "啾!"]), 900);
+            showBubble(pick(tr("say.sneeze")), 900);
           }
         } else {
           bodyTilt = -4 * state.facing;
@@ -2703,7 +2673,7 @@ function tick(now) {
         if (!state.kissShown && t > 0.45) {
           state.kissShown = true;
           _spawnParticle("kiss", state.x + CAT_W / 2 + rand(-8, 8), state.y + 22, "💋", 1400);
-          showBubble(pick(["啾~", "mua~", "啾♡"]), 1200);
+          showBubble(pick(tr("say.kiss")), 1200);
           bumpMood(8);
         }
         break;
@@ -2945,7 +2915,18 @@ function tick(now) {
 }
 
 // ===== Wire up =====
+// Paint the static context-menu labels in the active language, then tag the
+// document so CSS / assistive tech see the right lang.
+function localizeMenu() {
+  document.documentElement.setAttribute("lang", LANG);
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    const val = tr(el.dataset.i18n);
+    if (typeof val === "string") el.textContent = val;
+  });
+}
+
 window.addEventListener("DOMContentLoaded", () => {
+  localizeMenu();
   // default starting position
   state.x = window.innerWidth * 0.5 - CAT_W / 2;
   state.y = window.innerHeight * 0.6;
@@ -3145,11 +3126,11 @@ window.addEventListener("DOMContentLoaded", () => {
         state.species = sp;
         catEl.setAttribute("data-species", sp);
         catEl.setAttribute("data-color", SPECIES_DEFAULT_COLOR[sp]);
-        showBubble("...?", 900);
+        showBubble(tr("say.huh"), 900);
       }
     } else if (color && COLORS.includes(color)) {
       catEl.setAttribute("data-color", color);
-      showBubble("好看吗?", 1200);
+      showBubble(tr("say.lookGood"), 1200);
     } else if (act === "sleep") {
       startSleeping(performance.now());
     } else if (act === "go-home") {
@@ -3198,7 +3179,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const c = event.payload;
     if (COLORS.includes(c)) {
       catEl.setAttribute("data-color", c);
-      showBubble("好看吗?", 1200);
+      showBubble(tr("say.lookGood"), 1200);
     }
   });
 
