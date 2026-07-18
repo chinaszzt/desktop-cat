@@ -3,7 +3,7 @@ const { listen } = window.__TAURI__.event;
 
 // `t` is imported as `tr` — the codebase already uses `t` heavily as a local
 // (animation progress, the active toy), which would shadow the import.
-import { LANG, L, t as tr } from "./i18n.js";
+import { LANG, L, t as tr, setLang, SUPPORTED_LANGS } from "./i18n.js";
 
 // debug overlay
 window.addEventListener("error", (e) => {
@@ -22,27 +22,39 @@ window.addEventListener("unhandledrejection", (e) => {
 // ===== Cat SVG (团子款) =====
 const CAT_SVG = `
 <svg viewBox="0 0 120 110" xmlns="http://www.w3.org/2000/svg" class="cat-svg" preserveAspectRatio="xMidYMax meet">
-  <ellipse cx="60" cy="103" rx="40" ry="3.2" fill="rgba(0,0,0,0.20)"/>
+  <ellipse cx="60" cy="103" rx="38" ry="3.4" fill="rgba(0,0,0,0.13)"/>
 
   <g id="tail" style="transform-origin: 22px 66px;">
     <path d="M 24 82 Q 8 80, 8 66 Q 10 56, 22 58" stroke="var(--body)" stroke-width="13" fill="none" stroke-linecap="round"/>
+    <circle cx="9" cy="66" r="5.6" fill="var(--belly)" opacity="0.85"/>
   </g>
 
   <g id="leg-bl" style="transform-origin: 42px 95px;"></g>
   <g id="leg-br" style="transform-origin: 82px 95px;"></g>
 
+  <!-- cheek fluff: soft fur wisps poking out at whisker level -->
+  <path d="M 20 59 Q 13 61, 18 64.5 Q 12 67, 18 70 Q 14 73.5, 20 74.5 L 23 59 Z" fill="var(--body)"/>
+  <path d="M 100 59 Q 107 61, 102 64.5 Q 108 67, 102 70 Q 106 73.5, 100 74.5 L 97 59 Z" fill="var(--body)"/>
+
   <ellipse cx="60" cy="68" rx="42" ry="34" fill="var(--body)"/>
 
+  <!-- ahoge: three tiny fur wisps on the crown -->
+  <g id="head-tuft">
+    <path d="M 56 35.5 Q 55 30.5, 51.5 29" stroke="var(--body-dark)" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <path d="M 60 34.8 Q 60 29, 58.5 26.5" stroke="var(--body-dark)" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <path d="M 64 35.5 Q 65.5 30.5, 68 29.5" stroke="var(--body-dark)" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="0.5"/>
+  </g>
+
   <g class="pattern pattern-stripes">
-    <path d="M 38 50 Q 44 46, 50 50" stroke="var(--body-dark)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.6"/>
-    <path d="M 54 46 Q 60 42, 66 46" stroke="var(--body-dark)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.6"/>
-    <path d="M 70 50 Q 76 46, 82 50" stroke="var(--body-dark)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.6"/>
+    <path d="M 38 50 Q 44 46, 50 50" stroke="var(--body-dark)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.42"/>
+    <path d="M 54 46 Q 60 42, 66 46" stroke="var(--body-dark)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.42"/>
+    <path d="M 70 50 Q 76 46, 82 50" stroke="var(--body-dark)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.42"/>
     <path d="M 32 70 Q 26 68, 24 76" stroke="var(--body-dark)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.5"/>
     <path d="M 88 70 Q 94 68, 96 76" stroke="var(--body-dark)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.5"/>
   </g>
   <g class="pattern pattern-patches">
     <path d="M 32 56 Q 26 64, 32 76 Q 44 78, 48 66 Q 46 52, 32 56 Z" fill="var(--accent, #F4A56B)"/>
-    <path d="M 76 50 Q 90 52, 92 64 Q 86 78, 72 74 Q 64 62, 76 50 Z" fill="var(--body-dark)"/>
+    <path d="M 84 46 Q 97 46, 100 57 Q 97 67, 86 63 Q 80 54, 84 46 Z" fill="var(--body-dark)"/>
     <ellipse cx="58" cy="86" rx="5" ry="3" fill="var(--accent, #F4A56B)"/>
   </g>
   <g class="pattern pattern-cow">
@@ -58,10 +70,14 @@ const CAT_SVG = `
   <ellipse cx="60" cy="86" rx="28" ry="11" fill="var(--belly)" opacity="0.55" class="belly-default"/>
 
   <g id="cat-ears">
-    <path d="M 30 40 Q 28 30, 40 30 Q 50 34, 48 42 Q 40 44, 30 40 Z" fill="var(--body)"/>
-    <path d="M 36 38 Q 36 33, 42 34 Q 45 38, 42 41 Q 38 41, 36 38 Z" fill="var(--inner-ear)" opacity="0.85"/>
-    <path d="M 90 40 Q 92 30, 80 30 Q 70 34, 72 42 Q 80 44, 90 40 Z" fill="var(--body)"/>
-    <path d="M 84 38 Q 84 33, 78 34 Q 75 38, 78 41 Q 82 41, 84 38 Z" fill="var(--inner-ear)" opacity="0.85"/>
+    <g id="ear-l" style="transform-origin: 39px 42px;">
+      <path d="M 30 40 Q 28 30, 40 30 Q 50 34, 48 42 Q 40 44, 30 40 Z" fill="var(--body)"/>
+      <path d="M 36 38 Q 36 33, 42 34 Q 45 38, 42 41 Q 38 41, 36 38 Z" fill="var(--inner-ear)" opacity="0.85"/>
+    </g>
+    <g id="ear-r" style="transform-origin: 81px 42px;">
+      <path d="M 90 40 Q 92 30, 80 30 Q 70 34, 72 42 Q 80 44, 90 40 Z" fill="var(--body)"/>
+      <path d="M 84 38 Q 84 33, 78 34 Q 75 38, 78 41 Q 82 41, 84 38 Z" fill="var(--inner-ear)" opacity="0.85"/>
+    </g>
   </g>
 
   <ellipse cx="60" cy="74" rx="18" ry="10" fill="var(--belly)" opacity="0.55"/>
@@ -70,14 +86,18 @@ const CAT_SVG = `
 
   <g id="eye-l" style="transform-origin: 48px 62px;">
     <g class="eye-style eye-normal">
-      <ellipse cx="48" cy="62" rx="5.5" ry="7.5" fill="var(--eye)"/>
-      <ellipse cx="49.6" cy="60" rx="2" ry="2.4" fill="#FFFFFF"/>
-      <circle cx="48.5" cy="65" r="0.7" fill="#FFFFFF" opacity="0.7"/>
+      <ellipse cx="48" cy="62" rx="7.3" ry="9.4" fill="var(--eye-rim, transparent)"/>
+      <ellipse cx="48" cy="62" rx="6.2" ry="8.3" fill="var(--eye)"/>
+      <ellipse cx="50" cy="59.4" rx="2.3" ry="2.8" fill="#FFFFFF"/>
+      <circle cx="46" cy="64.2" r="1.05" fill="#FFFFFF" opacity="0.85"/>
+      <ellipse cx="48" cy="67.6" rx="3" ry="1.1" fill="#FFFFFF" opacity="0.3"/>
     </g>
     <g class="eye-style eye-wide">
-      <ellipse cx="48" cy="62" rx="6.8" ry="9" fill="var(--eye)"/>
-      <ellipse cx="50" cy="59" rx="2.6" ry="3.2" fill="#FFFFFF"/>
-      <circle cx="48" cy="65.5" r="1.2" fill="#FFFFFF" opacity="0.8"/>
+      <ellipse cx="48" cy="62" rx="8.3" ry="10.5" fill="var(--eye-rim, transparent)"/>
+      <ellipse cx="48" cy="62" rx="7.2" ry="9.4" fill="var(--eye)"/>
+      <ellipse cx="50.2" cy="58.8" rx="2.7" ry="3.3" fill="#FFFFFF"/>
+      <circle cx="45.6" cy="64.6" r="1.3" fill="#FFFFFF" opacity="0.85"/>
+      <ellipse cx="48" cy="68.2" rx="3.4" ry="1.2" fill="#FFFFFF" opacity="0.32"/>
     </g>
     <g class="eye-style eye-hearts">
       <path d="M 48 58.5 C 45.6 56, 42.5 56.5, 42.5 59.8 C 42.5 63.5, 48 68, 48 68 C 48 68, 53.5 63.5, 53.5 59.8 C 53.5 56.5, 50.4 56, 48 58.5 Z" fill="#E54F6B"/>
@@ -88,28 +108,33 @@ const CAT_SVG = `
       <circle cx="48" cy="62" r="0.7" fill="#FFFFFF"/>
     </g>
     <g class="eye-style eye-x">
-      <path d="M 44 58 L 52 66" stroke="var(--eye)" stroke-width="2" stroke-linecap="round"/>
-      <path d="M 52 58 L 44 66" stroke="var(--eye)" stroke-width="2" stroke-linecap="round"/>
+      <path d="M 44 58 L 52 66" stroke="var(--eye-line, var(--eye))" stroke-width="2" stroke-linecap="round"/>
+      <path d="M 52 58 L 44 66" stroke="var(--eye-line, var(--eye))" stroke-width="2" stroke-linecap="round"/>
     </g>
     <g class="eye-style eye-happy">
-      <path d="M 42.5 64 Q 48 57, 53.5 64" stroke="var(--eye)" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <path d="M 42.5 64 Q 48 57, 53.5 64" stroke="var(--eye-line, var(--eye))" stroke-width="2.4" fill="none" stroke-linecap="round"/>
     </g>
     <g class="eye-style eye-angry">
+      <ellipse cx="48" cy="63" rx="6.2" ry="7.8" fill="var(--eye-rim, transparent)"/>
       <ellipse cx="48" cy="63" rx="5.2" ry="6.8" fill="var(--eye)"/>
       <ellipse cx="49.6" cy="61" rx="1.5" ry="1.8" fill="#FFFFFF"/>
-      <path d="M 41 56 L 53.5 60" stroke="var(--eye)" stroke-width="2" stroke-linecap="round"/>
+      <path d="M 41 56 L 53.5 60" stroke="var(--eye-line, var(--eye))" stroke-width="2" stroke-linecap="round"/>
     </g>
   </g>
   <g id="eye-r" style="transform-origin: 72px 62px;">
     <g class="eye-style eye-normal">
-      <ellipse cx="72" cy="62" rx="5.5" ry="7.5" fill="var(--eye)"/>
-      <ellipse cx="73.6" cy="60" rx="2" ry="2.4" fill="#FFFFFF"/>
-      <circle cx="72.5" cy="65" r="0.7" fill="#FFFFFF" opacity="0.7"/>
+      <ellipse cx="72" cy="62" rx="7.3" ry="9.4" fill="var(--eye-rim, transparent)"/>
+      <ellipse cx="72" cy="62" rx="6.2" ry="8.3" fill="var(--eye)"/>
+      <ellipse cx="74" cy="59.4" rx="2.3" ry="2.8" fill="#FFFFFF"/>
+      <circle cx="70" cy="64.2" r="1.05" fill="#FFFFFF" opacity="0.85"/>
+      <ellipse cx="72" cy="67.6" rx="3" ry="1.1" fill="#FFFFFF" opacity="0.3"/>
     </g>
     <g class="eye-style eye-wide">
-      <ellipse cx="72" cy="62" rx="6.8" ry="9" fill="var(--eye)"/>
-      <ellipse cx="74" cy="59" rx="2.6" ry="3.2" fill="#FFFFFF"/>
-      <circle cx="72" cy="65.5" r="1.2" fill="#FFFFFF" opacity="0.8"/>
+      <ellipse cx="72" cy="62" rx="8.3" ry="10.5" fill="var(--eye-rim, transparent)"/>
+      <ellipse cx="72" cy="62" rx="7.2" ry="9.4" fill="var(--eye)"/>
+      <ellipse cx="74.2" cy="58.8" rx="2.7" ry="3.3" fill="#FFFFFF"/>
+      <circle cx="69.6" cy="64.6" r="1.3" fill="#FFFFFF" opacity="0.85"/>
+      <ellipse cx="72" cy="68.2" rx="3.4" ry="1.2" fill="#FFFFFF" opacity="0.32"/>
     </g>
     <g class="eye-style eye-hearts">
       <path d="M 72 58.5 C 69.6 56, 66.5 56.5, 66.5 59.8 C 66.5 63.5, 72 68, 72 68 C 72 68, 77.5 63.5, 77.5 59.8 C 77.5 56.5, 74.4 56, 72 58.5 Z" fill="#E54F6B"/>
@@ -120,20 +145,24 @@ const CAT_SVG = `
       <circle cx="72" cy="62" r="0.7" fill="#FFFFFF"/>
     </g>
     <g class="eye-style eye-x">
-      <path d="M 68 58 L 76 66" stroke="var(--eye)" stroke-width="2" stroke-linecap="round"/>
-      <path d="M 76 58 L 68 66" stroke="var(--eye)" stroke-width="2" stroke-linecap="round"/>
+      <path d="M 68 58 L 76 66" stroke="var(--eye-line, var(--eye))" stroke-width="2" stroke-linecap="round"/>
+      <path d="M 76 58 L 68 66" stroke="var(--eye-line, var(--eye))" stroke-width="2" stroke-linecap="round"/>
     </g>
     <g class="eye-style eye-happy">
-      <path d="M 66.5 64 Q 72 57, 77.5 64" stroke="var(--eye)" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <path d="M 66.5 64 Q 72 57, 77.5 64" stroke="var(--eye-line, var(--eye))" stroke-width="2.4" fill="none" stroke-linecap="round"/>
     </g>
     <g class="eye-style eye-angry">
+      <ellipse cx="72" cy="63" rx="6.2" ry="7.8" fill="var(--eye-rim, transparent)"/>
       <ellipse cx="72" cy="63" rx="5.2" ry="6.8" fill="var(--eye)"/>
       <ellipse cx="73.6" cy="61" rx="1.5" ry="1.8" fill="#FFFFFF"/>
-      <path d="M 79 56 L 66.5 60" stroke="var(--eye)" stroke-width="2" stroke-linecap="round"/>
+      <path d="M 79 56 L 66.5 60" stroke="var(--eye-line, var(--eye))" stroke-width="2" stroke-linecap="round"/>
     </g>
   </g>
 
-  <path id="cat-nose" d="M 57 70 L 63 70 L 60 73 Z" fill="var(--nose)"/>
+  <g id="cat-nose">
+    <path d="M 56.6 69.8 C 57.4 68.5, 59.2 68.7, 60 69.8 C 60.8 68.7, 62.6 68.5, 63.4 69.8 C 64.1 71, 62.4 72.7, 60 73.9 C 57.6 72.7, 55.9 71, 56.6 69.8 Z" fill="var(--nose)"/>
+    <ellipse cx="58.6" cy="70.1" rx="0.9" ry="0.55" fill="#FFFFFF" opacity="0.55"/>
+  </g>
 
   <g id="mouth" style="transform-origin: 60px 75px;">
     <g class="mouth-style mouth-normal">
@@ -160,8 +189,14 @@ const CAT_SVG = `
     <path id="mouth-open" d="M 56 75 Q 60 81, 64 75 Q 60 78, 56 75 Z" fill="#C2546F" opacity="0"/>
   </g>
 
-  <ellipse cx="42" cy="70" rx="4.5" ry="2.6" fill="var(--blush)" opacity="0.7"/>
-  <ellipse cx="78" cy="70" rx="4.5" ry="2.6" fill="var(--blush)" opacity="0.7"/>
+  <g id="blush-l">
+    <ellipse cx="42" cy="70" rx="5.2" ry="3" fill="var(--blush)" opacity="0.75"/>
+    <path d="M 39.8 68.4 L 41.2 71.6 M 42.8 68.2 L 44.2 71.4" stroke="#E8798F" stroke-width="0.9" stroke-linecap="round" opacity="0.5"/>
+  </g>
+  <g id="blush-r">
+    <ellipse cx="78" cy="70" rx="5.2" ry="3" fill="var(--blush)" opacity="0.75"/>
+    <path d="M 75.8 68.4 L 77.2 71.6 M 78.8 68.2 L 80.2 71.4" stroke="#E8798F" stroke-width="0.9" stroke-linecap="round" opacity="0.5"/>
+  </g>
 
   <g id="whisker-l" style="transform-origin: 40px 73px;">
     <path d="M 40 72 L 26 70" stroke="var(--whisker)" stroke-width="1" stroke-linecap="round" opacity="0.85"/>
@@ -174,9 +209,11 @@ const CAT_SVG = `
 
   <g id="leg-fl" style="transform-origin: 42px 95px;">
     <ellipse cx="42" cy="98" rx="9" ry="5" fill="var(--body-dark)"/>
+    <path d="M 39.6 96.4 L 39.2 100 M 44.4 96.4 L 44.8 100" stroke="#FFFFFF" stroke-width="1.1" stroke-linecap="round" opacity="0.32"/>
   </g>
   <g id="leg-fr" style="transform-origin: 82px 95px;">
     <ellipse cx="82" cy="98" rx="9" ry="5" fill="var(--body-dark)"/>
+    <path d="M 79.6 96.4 L 79.2 100 M 84.4 96.4 L 84.8 100" stroke="#FFFFFF" stroke-width="1.1" stroke-linecap="round" opacity="0.32"/>
   </g>
 
   <!-- pig parts: drooping ears, big snout, curly tail -->
@@ -222,10 +259,11 @@ const SPECIES_SPEED = { cat: 1.0, pig: 0.78, bear: 0.72 };
 function speciesSpeed() { return SPECIES_SPEED[state.species] || 1; }
 
 const COLORS = [...SPECIES_COLORS.cat, ...SPECIES_COLORS.pig, ...SPECIES_COLORS.bear];
-// ambient mood pools, keyed by species — sourced from the active language pack
-const SPECIES_SOUNDS = L.sounds;
+// ambient mood pools, keyed by species — read from L live so a language
+// switch from the context menu takes effect immediately (L is a live binding)
 function pickMeowByMood(now) {
-  const pool = SPECIES_SOUNDS[state.species] || SPECIES_SOUNDS.cat;
+  const sounds = L.sounds;
+  const pool = sounds[state.species] || sounds.cat;
   if (state.mode === "sleeping" || state.sleepiness > 75) return pick(pool.sleepy);
   if (state.mood < 30) return pick(pool.grumpy);
   if (state.cursorMoveAmt > 220) return pick(pool.excited);
@@ -233,7 +271,6 @@ function pickMeowByMood(now) {
   if (state.mood > 70) return pick(pool.happy);
   return pick(pool.neutral);
 }
-const MEOWS = SPECIES_SOUNDS.cat.neutral;  // legacy alias used in a couple spots
 const HEARTS = ["❤", "❤❤", "♡", "(´• ω •`)♡"];
 const SLEEPY = ["zzz...", "Zzz", "💤"];
 
@@ -322,6 +359,8 @@ const state = {
   chase: null,
   // ad-hoc tail wag overlay (can fire in any mode)
   tailWag: null,                   // { t0, dur, intensity, freq }
+  // ad-hoc ear flick overlay
+  earTwitch: null,                 // { t0, dur, side: -1 left | 1 right }
   // tiny micro-pauses while walking
   pauseUntil: 0,
   // idle sub-action: sit | yawn | stretch | groom | look | nap | tail_curl
@@ -438,6 +477,8 @@ const mouth = document.getElementById("mouth");
 const mouthOpen = document.getElementById("mouth-open");
 const whiskerL = document.getElementById("whisker-l");
 const whiskerR = document.getElementById("whisker-r");
+const earL = document.getElementById("ear-l");
+const earR = document.getElementById("ear-r");
 
 // ===== Helpers =====
 function rand(a, b) { return a + Math.random() * (b - a); }
@@ -503,7 +544,13 @@ function triggerTailWag(now, intensity, freq, dur) {
 
 let blinkUntil = 0;
 let yawnUntil = 0;
-const triggerBlink = () => { blinkUntil = performance.now() + 160; };
+const triggerBlink = () => {
+  blinkUntil = performance.now() + 160;
+  // occasional quick double-blink
+  if (Math.random() < 0.25) {
+    setTimeout(() => { blinkUntil = performance.now() + 140; }, 270);
+  }
+};
 const triggerYawn  = (dur=700) => { yawnUntil = performance.now() + dur; };
 
 // ===== Particle helpers =====
@@ -713,10 +760,6 @@ function scheduleJump(now) {
   spawnDust(state.x + CAT_W / 2, state.y + CAT_H - 2);
 }
 
-// species-flavored bubble shown right as an idle sub-action kicks off
-// (sourced from the active language pack)
-const IDLE_START_BUBBLE = L.idleStart;
-
 function startIdle(now, longer = false, forceAction = null) {
   state.mode = "idle";
   let choice;
@@ -782,7 +825,7 @@ function startIdle(now, longer = false, forceAction = null) {
     const bb = bounds();
     state.facing = (state.x - bb.minX < bb.maxX - state.x) ? 1 : -1;
   }
-  const startBubble = IDLE_START_BUBBLE[choice];
+  const startBubble = L.idleStart[choice];
   if (startBubble) {
     const dur = choice === "knead" ? 1800 : 1500;
     showBubble(startBubble[state.species] || startBubble.cat, dur);
@@ -1512,7 +1555,7 @@ function tick(now) {
       && now - state.lastAmbientMeowT > rand(35000, 70000)) {
     state.lastAmbientMeowT = now;
     if (Math.random() < 0.5) {
-      const sounds = SPECIES_SOUNDS[state.species] || SPECIES_SOUNDS.cat;
+      const sounds = L.sounds[state.species] || L.sounds.cat;
       showBubble(pick(sounds.curious), 1100);
     }
   }
@@ -1619,6 +1662,15 @@ function tick(now) {
     if (Math.random() < perFrame) {
       triggerTailWag(now);
     }
+  }
+
+  // ---- ambient ear flick: one ear snaps back and settles ----
+  if (state.earTwitch && now > state.earTwitch.t0 + state.earTwitch.dur) {
+    state.earTwitch = null;
+  }
+  if (!state.earTwitch && state.mode !== "sleeping" && state.mode !== "in_bed"
+      && Math.random() < dt * 0.00006) {
+    state.earTwitch = { t0: now, dur: 420, side: Math.random() < 0.5 ? -1 : 1 };
   }
 
   // reuse the values computed at the top of tick
@@ -2207,6 +2259,10 @@ function tick(now) {
     const phase = (now / 600) % (Math.PI * 2);
     bodyBob   = Math.sin(phase) * 0.5;
     tailSwing = Math.sin(now / 800) * 8;
+    // visible slow breathing while standing still (idle actions may override below)
+    const breath = Math.sin(now / 1150);
+    bodyScaleY = 1 + breath * 0.014;
+    bodyScaleX = 1 - breath * 0.007;
   }
 
   // ----- IDLE sub-action overlays -----
@@ -2869,6 +2925,20 @@ function tick(now) {
   whiskerL.style.transform = `rotate(${Math.sin(wPhase)       * wAmp}deg)`;
   whiskerR.style.transform = `rotate(${Math.sin(wPhase + 0.4) * wAmp}deg)`;
 
+  // ears: perk up when locked on something, flick on ambient twitch
+  let earLRot = 0, earRRot = 0;
+  const earsAlert = state.mode === "watching" || state.mode === "interested"
+                 || state.mode === "chasing" || state.mode === "playing";
+  if (earsAlert) { earLRot = -4; earRRot = 4; }
+  if (state.earTwitch) {
+    const et = (now - state.earTwitch.t0) / state.earTwitch.dur;
+    const flick = Math.sin(et * Math.PI * 3) * Math.max(0, 1 - et) * 14;
+    if (state.earTwitch.side < 0) earLRot += flick;
+    else earRRot -= flick;
+  }
+  earL.style.transform = `rotate(${earLRot}deg)`;
+  earR.style.transform = `rotate(${earRRot}deg)`;
+
   // ----- bed (visible during go-home / in-bed / dragging a bed-cat) -----
   const draggingFromBed = state.mode === "dragged" && state.press && state.press.fromInBed;
   const bedVisible = state.mode === "in_bed" || state.mode === "going_home" || draggingFromBed;
@@ -3068,6 +3138,11 @@ window.addEventListener("DOMContentLoaded", () => {
       if (state.toy && it.dataset.toy === state.toy.type) it.classList.add("active");
       else it.classList.remove("active");
     });
+    // mark the currently-active language with ✓
+    ctxMenuEl.querySelectorAll(".ctx-item[data-lang]").forEach(it => {
+      if (it.dataset.lang === LANG) it.classList.add("active");
+      else it.classList.remove("active");
+    });
     // hide the cancel row when no toy is out
     const cancelRow = ctxMenuEl.querySelector('.ctx-item[data-act="toy-cancel"]');
     if (cancelRow) cancelRow.style.display = state.toy ? "" : "none";
@@ -3150,6 +3225,13 @@ window.addEventListener("DOMContentLoaded", () => {
       }
     } else if (act === "toy-cancel") {
       cancelToy(performance.now());
+    } else if (act === "lang") {
+      const lang = item.dataset.lang;
+      if (SUPPORTED_LANGS.includes(lang) && lang !== LANG) {
+        setLang(lang);
+        localizeMenu();
+        showBubble(tr("say.lookGood"), 1200);
+      }
     } else if (act === "quit") {
       invoke("quit_app").catch(() => {});
     }

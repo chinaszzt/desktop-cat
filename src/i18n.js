@@ -1,9 +1,14 @@
-// ===== i18n: follow the system language (zh / en / ja / ko) =====
+// ===== i18n: follow the system language (zh / en / ja / ko), overridable from
+// the right-click menu =====
 // The webview's navigator.language mirrors the OS locale, so detection is
 // zero-config. Anything not one of the four supported languages falls back to
-// English.
+// English. A manual pick from the context menu is remembered in localStorage
+// and takes priority over the OS locale on future launches.
 
-export function detectLang() {
+const STORAGE_KEY = "catdeskpet-lang";
+export const SUPPORTED_LANGS = ["zh", "en", "ja", "ko"];
+
+function detectSystemLang() {
   const raw = ((navigator.languages && navigator.languages[0]) || navigator.language || "en").toLowerCase();
   if (raw.startsWith("zh")) return "zh";
   if (raw.startsWith("ja")) return "ja";
@@ -11,7 +16,15 @@ export function detectLang() {
   return "en";
 }
 
-export const LANG = detectLang();
+export function detectLang() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved && SUPPORTED_LANGS.includes(saved)) return saved;
+  } catch {}
+  return detectSystemLang();
+}
+
+export let LANG = detectLang();
 
 // Each language pack mirrors the same shape:
 //   ui        — context-menu labels
@@ -22,7 +35,7 @@ export const LANG = detectLang();
 const PACKS = {
   zh: {
     ui: {
-      animal: "动物", color: "毛色", interact: "互动", toys: "玩具", quit: "退出",
+      animal: "动物", color: "毛色", interact: "互动", toys: "玩具", language: "语言", quit: "退出",
       species: { cat: "猫", pig: "猪", bear: "熊" },
       colors: {
         orange: "橘猫", calico: "三花", cow: "奶牛", tabby: "灰虎斑", tuxedo: "黑白",
@@ -83,7 +96,7 @@ const PACKS = {
 
   en: {
     ui: {
-      animal: "Animal", color: "Color", interact: "Play", toys: "Toys", quit: "Quit",
+      animal: "Animal", color: "Color", interact: "Play", toys: "Toys", language: "Language", quit: "Quit",
       species: { cat: "Cat", pig: "Pig", bear: "Bear" },
       colors: {
         orange: "Orange", calico: "Calico", cow: "Cow", tabby: "Gray Tabby", tuxedo: "Tuxedo",
@@ -144,7 +157,7 @@ const PACKS = {
 
   ja: {
     ui: {
-      animal: "どうぶつ", color: "毛色", interact: "ふれあい", toys: "おもちゃ", quit: "終了",
+      animal: "どうぶつ", color: "毛色", interact: "ふれあい", toys: "おもちゃ", language: "言語", quit: "終了",
       species: { cat: "ネコ", pig: "ブタ", bear: "クマ" },
       colors: {
         orange: "茶トラ", calico: "三毛", cow: "牛柄", tabby: "キジトラ", tuxedo: "白黒",
@@ -205,7 +218,7 @@ const PACKS = {
 
   ko: {
     ui: {
-      animal: "동물", color: "털색", interact: "상호작용", toys: "장난감", quit: "종료",
+      animal: "동물", color: "털색", interact: "상호작용", toys: "장난감", language: "언어", quit: "종료",
       species: { cat: "고양이", pig: "돼지", bear: "곰" },
       colors: {
         orange: "치즈", calico: "삼색이", cow: "젖소", tabby: "고등어", tuxedo: "턱시도",
@@ -266,7 +279,18 @@ const PACKS = {
 };
 
 // The resolved language pack for this session.
-export const L = PACKS[LANG] || PACKS.en;
+export let L = PACKS[LANG] || PACKS.en;
+
+// Manually switch language (from the context-menu picker) and remember the
+// choice for future launches. LANG/L are live bindings, so every importer
+// sees the new pack immediately — callers just need to re-paint any text
+// they already rendered (see main.js's localizeMenu()).
+export function setLang(lang) {
+  if (!PACKS[lang] || lang === LANG) return;
+  LANG = lang;
+  L = PACKS[lang];
+  try { localStorage.setItem(STORAGE_KEY, lang); } catch {}
+}
 
 // Look up a dotted path in the active pack, e.g. t("ui.species.cat") or
 // t("say.grumpy"). Returns whatever is stored — string, array, or object —
