@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CatDeskPet</title>
+    <script>
+      window.__TAURI__={core:{invoke:()=>Promise.resolve()},event:{listen:()=>Promise.resolve(()=>{})}};
+      // headless preview: rAF is paused in hidden tabs — drive callbacks off a MessageChannel
+      // loop (not throttled like timers), gated to ~30fps by performance.now()
+      (function () {
+        const cbs = [];
+        window.requestAnimationFrame = (cb) => { cbs.push(cb); return 0; };
+        const ch = new MessageChannel();
+        let last = 0;
+        ch.port1.onmessage = () => {
+          const now = performance.now();
+          if (!window.__freeze && now - last >= 33 && cbs.length) {
+            last = now;
+            const list = cbs.splice(0);
+            list.forEach((cb) => { try { cb(now); } catch (e) { console.error(e); } });
+          }
+          ch.port2.postMessage(0);
+        };
+        ch.port2.postMessage(0);
+      })();
+    </script>
+    <script type="module" src="/main.js" defer></script>
+  </head>
+  <body>
+    <div id="stage">
+      <div id="bed" class="hidden" data-species="cat">
+        <svg viewBox="0 0 130 70" width="130" height="70" overflow="visible">
+          <ellipse cx="65" cy="62" rx="56" ry="6" fill="rgba(0,0,0,0.22)"/>
+          <ellipse cx="65" cy="42" rx="60" ry="22" fill="var(--bed-dark)"/>
+          <ellipse cx="65" cy="40" rx="46" ry="14" fill="var(--bed-light)"/>
+          <ellipse cx="58" cy="36" rx="22" ry="5" fill="var(--bed-shine)" opacity="0.65"/>
+          <!-- pig: straw whiskers across the rim -->
+          <g class="bed-deco bed-deco-pig">
+            <path d="M 18 36 L 8 30" stroke="#A87232" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M 18 40 L 6 38" stroke="#A87232" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M 112 36 L 122 30" stroke="#A87232" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M 112 40 L 124 38" stroke="#A87232" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M 65 24 L 60 16 M 65 24 L 70 16 M 65 24 L 65 14" stroke="#A87232" stroke-width="1.4" stroke-linecap="round"/>
+          </g>
+          <!-- bear: wood ring grain -->
+          <g class="bed-deco bed-deco-bear">
+            <ellipse cx="65" cy="40" rx="34" ry="9" stroke="#5E3B1A" stroke-width="0.8" fill="none" opacity="0.45"/>
+            <ellipse cx="65" cy="40" rx="22" ry="5.5" stroke="#5E3B1A" stroke-width="0.8" fill="none" opacity="0.45"/>
+          </g>
+          <!-- species decoration emoji at the rim corner -->
+          <text class="bed-deco-icon" x="98" y="36" font-size="18" text-anchor="middle"></text>
+        </svg>
+      </div>
+      <div id="cat" data-species="cat" data-color="orange" data-facing="right" data-eyes="normal" data-mouth="normal">
+        <div id="hat" class="hidden"></div>
+        <div id="bubble" class="hidden"><span id="bubble-text">喵~</span></div>
+        <div id="cat-body"></div>
+        <div id="bed-body" class="hidden"></div>
+      </div>
+      <div id="toy" class="hidden">🧶</div>
+      <div id="feed-emoji" class="hidden">🐟</div>
+      <div id="gift" class="hidden">🍂</div>
+      <div id="flash" class="hidden"></div>
+      <div id="bird" class="hidden">🐦</div>
+      <svg id="laser-trail" preserveAspectRatio="none"></svg>
+      <div id="particles"></div>
+      <div id="ctx-menu" class="hidden">
+        <div class="ctx-item has-sub">
+          <span class="sub-label">🐾 <span data-i18n="ui.animal">动物</span></span>
+          <span class="sub-arrow">▸</span>
+          <div class="ctx-submenu">
+            <div class="ctx-item" data-act="species" data-species="cat">🐈 <span data-i18n="ui.species.cat">猫</span></div>
+            <div class="ctx-item" data-act="species" data-species="pig">🐷 <span data-i18n="ui.species.pig">猪</span></div>
+            <div class="ctx-item" data-act="species" data-species="bear">🐻 <span data-i18n="ui.species.bear">熊</span></div>
+          </div>
+        </div>
+
+        <div class="ctx-item has-sub">
+          <span class="sub-label">🎨 <span data-i18n="ui.color">毛色</span></span>
+          <span class="sub-arrow">▸</span>
+          <div class="ctx-submenu">
+            <div class="ctx-item color-cat" data-color="orange">🟠 <span data-i18n="ui.colors.orange">橘猫</span></div>
+            <div class="ctx-item color-cat" data-color="calico">🐱 <span data-i18n="ui.colors.calico">三花</span></div>
+            <div class="ctx-item color-cat" data-color="cow">🐮 <span data-i18n="ui.colors.cow">奶牛</span></div>
+            <div class="ctx-item color-cat" data-color="tabby">🩶 <span data-i18n="ui.colors.tabby">灰虎斑</span></div>
+            <div class="ctx-item color-cat" data-color="tuxedo">🎩 <span data-i18n="ui.colors.tuxedo">黑白</span></div>
+            <div class="ctx-item color-pig"  data-color="pink">🌸 <span data-i18n="ui.colors.pink">粉猪</span></div>
+            <div class="ctx-item color-pig"  data-color="cream">🥛 <span data-i18n="ui.colors.cream">奶白猪</span></div>
+            <div class="ctx-item color-bear" data-color="brown">🟫 <span data-i18n="ui.colors.brown">棕熊</span></div>
+            <div class="ctx-item color-bear" data-color="black">⬛ <span data-i18n="ui.colors.black">黑熊</span></div>
+            <div class="ctx-item color-bear" data-color="polar">⬜ <span data-i18n="ui.colors.polar">北极熊</span></div>
+          </div>
+        </div>
+
+        <div class="ctx-item has-sub">
+          <span class="sub-label">🎮 <span data-i18n="ui.interact">互动</span></span>
+          <span class="sub-arrow">▸</span>
+          <div class="ctx-submenu">
+            <div class="ctx-item" data-act="feed">🍴 <span data-i18n="ui.interactItems.feed">投食</span></div>
+            <div class="ctx-item" data-act="sleep">💤 <span data-i18n="ui.interactItems.sleep">让她睡一下</span></div>
+            <div class="ctx-item" data-act="go-home">🏠 <span data-i18n="ui.interactItems.goHome">回窝睡觉</span></div>
+            <div class="ctx-item" data-act="photo">📸 <span data-i18n="ui.interactItems.photo">拍照模式</span></div>
+          </div>
+        </div>
+
+        <div class="ctx-item has-sub">
+          <span class="sub-label">🧸 <span data-i18n="ui.toys">玩具</span></span>
+          <span class="sub-arrow">▸</span>
+          <div class="ctx-submenu">
+            <div class="ctx-item" data-act="toy" data-toy="yarn">🧶 <span data-i18n="ui.toyItems.yarn">毛线球</span></div>
+            <div class="ctx-item" data-act="toy" data-toy="ball">⚽ <span data-i18n="ui.toyItems.ball">弹力球</span></div>
+            <div class="ctx-item" data-act="toy" data-toy="paper">📄 <span data-i18n="ui.toyItems.paper">纸团</span></div>
+            <div class="ctx-item" data-act="toy" data-toy="mouse">🐭 <span data-i18n="ui.toyItems.mouse">假老鼠</span></div>
+            <div class="ctx-item" data-act="toy" data-toy="laser">🔴 <span data-i18n="ui.toyItems.laser">激光笔</span></div>
+            <div class="ctx-item" data-act="toy" data-toy="wand">🪶 <span data-i18n="ui.toyItems.wand">逗猫棒</span></div>
+            <div class="ctx-item" data-act="toy-cancel">❌ <span data-i18n="ui.toyItems.cancel">收起玩具</span></div>
+          </div>
+        </div>
+
+        <div class="ctx-item has-sub">
+          <span class="sub-label">🌐 <span data-i18n="ui.language">语言</span></span>
+          <span class="sub-arrow">▸</span>
+          <div class="ctx-submenu">
+            <div class="ctx-item" data-act="lang" data-lang="zh">中文</div>
+            <div class="ctx-item" data-act="lang" data-lang="en">English</div>
+            <div class="ctx-item" data-act="lang" data-lang="ja">日本語</div>
+            <div class="ctx-item" data-act="lang" data-lang="ko">한국어</div>
+          </div>
+        </div>
+
+        <div class="ctx-sep"></div>
+        <div class="ctx-item ctx-danger" data-act="quit" data-i18n="ui.quit">退出</div>
+      </div>
+    </div>
+  </body>
+</html>

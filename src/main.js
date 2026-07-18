@@ -367,6 +367,7 @@ const state = {
   idleAction: null,
   idleActionT0: 0,
   lookFlipped: false,
+  tcFacing0: 1,                    // facing at tail_chase start (pounces alternate around it)
   // trick sub-action: meow | heart | spin | pounce | happy_jump
   trickAction: null,
   trickT0: 0,
@@ -702,18 +703,16 @@ function startChase(now) {
   else               variant = "chase_tail";
 
   if (variant === "dash") { startZoom(now); return; }
+  if (variant === "chase_tail") {
+    // hop-and-pounce after the tail — same show as the idle action
+    startIdle(now, false, "tail_chase");
+    return;
+  }
 
   state.mode = "chasing";
   state.chase = { variant, t0: now, leapsLeft: 0, leapT0: 0, pauseUntil: 0 };
   state.jump = null;
   triggerTailWag(now, 34, 9, 1600);
-
-  if (variant === "chase_tail") {
-    state.chase.spinT0 = now;
-    state.modeUntil = now + rand(2200, 3000);   // 2-3 spins
-    triggerTailWag(now, 38, 11, 2400);
-    return;
-  }
 
   if (variant === "swat") {
     // face a random side, swat at empty air
@@ -790,6 +789,10 @@ function startIdle(now, longer = false, forceAction = null) {
   state.lookFlipped = false;
   state.stareLocked = false;
   state.sneezeShown = false;
+  if (choice === "tail_chase") {
+    state.tcFacing0 = state.facing;
+    triggerTailWag(now, 38, 11, 2400);
+  }
   const durs = {
     sit: rand(1500, 2800),
     yawn: 900,
@@ -2087,12 +2090,6 @@ function tick(now) {
         state.chase = null;
         startIdle(now);
       }
-    } else if (c.variant === "chase_tail") {
-      // spinning in place — render syncs bodyTilt directly
-      if (now > state.modeUntil) {
-        state.chase = null;
-        startIdle(now);
-      }
     } else if (c.variant === "leap" || c.variant === "leap_swat") {
       if (now < c.pauseUntil) {
         // between leaps - hold position
@@ -2435,27 +2432,34 @@ function tick(now) {
         break;
       }
       case "tail_chase": {
+        // hop-and-pounce: spot the tail, then spring back and forth after it,
+        // flipping around each beat (the hop-turn machinery renders the jumps)
         const tt = now - state.idleActionT0;
-        if (tt < 600) {
-          // spot the tail — twist toward it
-          bodyTilt = smoothstep(tt / 600) * 10 * state.facing;
-          bodyScaleY = 0.97;
-          tailSwing = Math.sin(now / 130) * 16;
+        if (tt < 500) {
+          // spot it — crouch low while the tail flicks teasingly
+          const k = smoothstep(tt / 500);
+          bodyTilt = -k * 8 * state.facing;
+          bodyScaleY = 1 - k * 0.07;
+          tailSwing = Math.sin(now / 140) * 22;
         } else if (tt < 2200) {
-          // two full spins in place (raw rotation — see isSpinning below)
-          const k = (tt - 600) / 1600;
-          bodyTilt = (10 + k * 720) * state.facing;
-          bodyBob = Math.sin(now / 90) * 1.5;
-          tailSwing = Math.sin(now / 70) * 30;
-          legFLY = Math.sin(now / 100) * 2;
-          legFRY = -Math.sin(now / 100) * 2;
+          const beat = 540;
+          const n = Math.floor((tt - 500) / beat);
+          state.facing = (n % 2 === 0) ? -state.tcFacing0 : state.tcFacing0;
+          const p = ((tt - 500) % beat) / beat;
+          const lunge = Math.sin(clamp(p * 1.6, 0, 1) * Math.PI);  // quick spring, brief reset
+          bodyTilt = lunge * 13 * state.facing;
+          bodyScaleY = 0.94 - lunge * 0.05;
+          bodyBob = Math.sin(now / 90) * 1.2;
+          tailSwing = -lunge * 24 + Math.sin(now / 75) * 10;       // tail whips out of reach
+          const grab = Math.max(0, Math.sin(p * Math.PI * 2)) * 4; // grabby front paw
+          if (state.facing > 0) legFRY = -grab; else legFLY = -grab;
         } else {
-          // dizzy stop — settle to upright with a decaying overshoot wobble
-          // fold accumulated turns first so the lerp doesn't unwind 2 spins
-          state.disp.bodyTilt = ((state.disp.bodyTilt % 360) + 540) % 360 - 180;
+          // tail wins — sit back dizzy with a decaying wobble
+          state.facing = state.tcFacing0;
           const k = clamp((tt - 2200) / 600, 0, 1);
-          bodyTilt = Math.sin(k * Math.PI * 3) * (1 - k) * 12 * state.facing;
+          bodyTilt = Math.sin(k * Math.PI * 3) * (1 - k) * 10 * state.facing;
           bodyBob = Math.sin(now / 120) * 1.0 * (1 - k);
+          bodyScaleY = 0.97;
         }
         break;
       }
@@ -2471,21 +2475,26 @@ function tick(now) {
         break;
       }
       case "mud_roll": {
+        // wallow: flop down, rock side to side with mud flying, then shake it off
         const tt = now - state.idleActionT0;
-        if (tt < 2000) {
-          // full-circle wallow (raw rotation — see isSpinning below)
-          bodyTilt = (tt / 2000) * 360 * state.facing;
-          bodyScaleY = 0.94;
-          bodyBob = Math.sin(now / 150) * 1.5;
-          if (now - state.lastMudT > 300) {
+        if (tt < 2100) {
+          const flop = smoothstep(clamp(tt / 350, 0, 1));
+          const rock = Math.sin(Math.max(0, tt - 350) / 880 * Math.PI * 2) * flop;
+          bodyTilt = rock * 58 * state.facing;
+          bodyScaleY = 1 - flop * 0.15;
+          bodyScaleX = 1 + flop * 0.06;
+          bodyBob = Math.abs(rock) * 2;                 // body sinks as it tips over
+          legFLY = flop * (-3 + Math.sin(now / 110) * 2.5);            // happy air-kicks
+          legFRY = flop * (-4 + Math.sin(now / 110 + Math.PI) * 2.5);
+          tailSwing = Math.sin(now / 160) * 18;
+          if (flop >= 1 && Math.abs(rock) > 0.55 && now - state.lastMudT > 260) {
             state.lastMudT = now;
-            spawnMud(state.x + CAT_W / 2 - rand(20, 42), state.y + CAT_H - rand(8, 30));
-            spawnMud(state.x + CAT_W / 2 + rand(20, 42), state.y + CAT_H - rand(8, 30));
+            spawnMud(state.x + CAT_W / 2 - rand(18, 44), state.y + CAT_H - rand(6, 26));
+            spawnMud(state.x + CAT_W / 2 + rand(18, 44), state.y + CAT_H - rand(6, 26));
           }
         } else {
           // shake the mud off (same trick as the "shake" idle)
-          state.disp.bodyTilt = ((state.disp.bodyTilt % 360) + 540) % 360 - 180;
-          const k = clamp((tt - 2000) / 1200, 0, 1);
+          const k = clamp((tt - 2100) / 1100, 0, 1);
           bodyTilt = Math.sin(now / 32) * 5 * (1 - k);
           legFLY = Math.sin(now / 26) * 2.5 * (1 - k);
           legFRY = -Math.sin(now / 26) * 2.5 * (1 - k);
@@ -2846,24 +2855,9 @@ function tick(now) {
   // ----- select face (eyes + mouth variant) -----
   selectFace(now);
 
-  // chase_tail: spinning in place — apply rotation directly (sync, not lerped)
-  if (state.mode === "chasing" && state.chase && state.chase.variant === "chase_tail") {
-    const spinT = (now - state.chase.spinT0) / Math.max(1, state.modeUntil - state.chase.spinT0);
-    bodyTilt = spinT * 720 * state.facing;
-    bodyBob = Math.sin(now / 90) * 1.5;
-    tailSwing = Math.sin(now / 70) * 30;
-    legFLY = Math.sin(now / 100) * 2;
-    legFRY = -Math.sin(now / 100) * 2;
-  }
-
   // ----- low-pass smoothing — kills mode-switch pops -----
-  // spin / chase_tail need raw bodyTilt or rotation lags
-  const idleAge = now - state.idleActionT0;
-  const isSpinning =
-    (state.mode === "trick" && state.trickAction === "spin")
-    || (state.mode === "chasing" && state.chase && state.chase.variant === "chase_tail")
-    || (state.mode === "idle" && state.idleAction === "tail_chase" && idleAge >= 600 && idleAge < 2200)
-    || (state.mode === "idle" && state.idleAction === "mud_roll" && idleAge < 2000);
+  // the spin trick needs raw bodyTilt or rotation lags
+  const isSpinning = (state.mode === "trick" && state.trickAction === "spin");
   if (isSpinning) state.disp.bodyTilt = bodyTilt;
   else            lerpDisp("bodyTilt", bodyTilt, dt, 70);
   lerpDisp("bodyScaleX", bodyScaleX, dt, 70);
@@ -3266,4 +3260,7 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   requestAnimationFrame(tick);
+
+  // dev hook (browser preview / console): force an idle action, e.g. __forceIdle("mud_roll")
+  window.__forceIdle = (action) => startIdle(performance.now(), false, action);
 });
